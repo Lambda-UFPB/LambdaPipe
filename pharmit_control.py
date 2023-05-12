@@ -1,6 +1,8 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoAlertPresentException
 import time
 
 
@@ -15,6 +17,7 @@ class PharmitControl:
         # Get page
         self.driver.get("https://pharmit.csb.pitt.edu/search.html")
         self.driver.implicitly_wait(3)
+        """
         # Upload ligand
         ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
         ligand.send_keys("/home/kdunorat/Documentos/LambdaPipe/files/7KR1-pocket3-remdesivir-cid76325302.pdbqt")
@@ -22,7 +25,7 @@ class PharmitControl:
         time.sleep(3)
         receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
         receptor.send_keys("/home/kdunorat/Documentos/LambdaPipe/files/7KR1.pdbqt")
-
+        """
     def _get_json(self):
         # Download first json
         time.sleep(3)
@@ -31,24 +34,59 @@ class PharmitControl:
     def _upload_json(self):
         # Upload modified json
         load_session = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/div/input')
-        load_session.send_keys("/home/kdunorat/Documentos/LambdaPipe/files/pharmit.json")
+        load_session.send_keys("/home/kdunorat/Documentos/LambdaPipe/files/file_1.json")
 
     def _search(self):
         # Modificar o value (banco de dados) dps
         # Search
         search = self.driver.find_element(By.XPATH, '//*[@id="pharmitsearchbutton"]')
+        time.sleep(2)
         search.click()
+        start_time = time.time()
+        total_time = 0
+        hits = 0
+        while total_time < 25:
+            current_time = time.time()
+            total_time = current_time - start_time
+            try:
+                no_results = self.driver.find_element(By.CLASS_NAME, "dataTables_empty")
+                if no_results.text == 'No results found':
+                    print(no_results.text)
+                    break
+                else:
+                    end_search = self.driver.find_element(By.XPATH,
+                                                          "/html/body/div[1]/div[1]/div[4]/div[2]/div/div[1]/span")
+                    hits = end_search.text
+                    hits = hits.split(' ')
+                    hits = hits[-2]
+                    if "," in hits:
+                        hits = hits.replace(",", "")
+                    hits = int(hits)
+                    break
+
+            except NoSuchElementException:
+                time.sleep(1)
 
     def _download(self):
         # Minimize
+        time.sleep(3)
         self.driver.find_element(By.XPATH, '//*[@id="pharmit"]/div[1]/div[4]/div[3]/div/button[1]').click()
+        try:
+            self.driver.switch_to.alert.dismiss()
+        except NoAlertPresentException:
+            pass
         # Saving
-        time.sleep(5)
-        self.driver.find_element(By.XPATH, '//*[@id="pharmit"]/div[1]/div[4]/div[3]/div/button[2]').click()
+        while True:
+            save_button = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[3]/div[3]/div[2]/button')
+            if save_button.is_enabled():
+                time.sleep(1)
+                save_button.click()
+                break
+            time.sleep(1)
 
     def run(self):
-        #self._upload_files()
-        #self._get_json()
+        self._upload_files()
+        # self._get_json()
         self._upload_json()
-        #self._search()
-        #self._download()
+        self._search()
+        self._download()
