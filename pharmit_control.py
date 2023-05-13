@@ -5,6 +5,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from json_handler import JsonHandler
 import time
+import utils
 
 
 class PharmitControl:
@@ -29,7 +30,7 @@ class PharmitControl:
 
     def _get_json(self):
         # Download first json
-        JsonHandler.check_existence()
+        utils.remove_previous("pharmit.json")
         time.sleep(3)
         self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/button').click()
 
