@@ -20,8 +20,8 @@ class JsonHandler:
         return session
 
     def _pharma_switch(self):
-        for i in range(4, 20):
-            self.session["points"][i]["enabled"] = False
+        for i, switch in enumerate(self.session["points"]):
+            switch["enabled"] = False
 
     def create_json(self):
         self._pharma_switch()
@@ -32,3 +32,4 @@ class JsonHandler:
 if __name__ == '__main__':
     jsh = JsonHandler()
     jsh.create_json()
+

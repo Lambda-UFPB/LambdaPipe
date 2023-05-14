@@ -34,6 +34,13 @@ class PharmitControl:
         time.sleep(3)
         self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/button').click()
 
+    def _change_db(self):
+        db_tuple = ("chembl", "chemdiv", "chemspace", "mcule", "ultimate", "nsc", "pubchem", "wuxi-lab", "zinc")
+        time.sleep(3)
+        database = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[1]/button[1]')
+        new_value = "chembl"
+        self.driver.execute_script("arguments[0].setAttribute('value', arguments[1]);", database, new_value)
+
     def _upload_json(self):
         # Create second json
         jsh = JsonHandler()
@@ -88,6 +95,7 @@ class PharmitControl:
 
     def run(self):
         self._upload_files()
-        self._get_json()
-        self._upload_json()
-        self._search()
+        self._change_db()
+        # self._get_json()
+        # self._upload_json()
+        # self._search()
