@@ -5,7 +5,6 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from json_handler import JsonHandler
 import time
-import utils
 
 
 class PharmitControl:
@@ -18,13 +17,15 @@ class PharmitControl:
         self.driver = webdriver.Chrome(options=options)
 
     def _open_tabs(self):
-
-        # Get tabs
+        main_tab = self.driver.current_window_handle
         for db in self.db_tuple:
             self.driver.execute_script(f"window.open('about:blank','{db}');")
             self.driver.switch_to.window(f"{db}")
             self.driver.get("https://pharmit.csb.pitt.edu/search.html")
             time.sleep(3)
+        self.driver.switch_to.window(main_tab)
+        self.driver.close()
+        self.driver.switch_to.window(f"{self.db_tuple[-1]}")
 
     def _upload_complex(self):
         # Get page
@@ -43,11 +44,10 @@ class PharmitControl:
         time.sleep(3)
         self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/button').click()
 
-    def _change_db(self):
+    def _change_db(self, db):
         time.sleep(3)
         database = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[1]/button[1]')
-        for db in self.db_tuple:
-            self.driver.execute_script("arguments[0].setAttribute('value', arguments[1]);", database, db)
+        self.driver.execute_script("arguments[0].setAttribute('value', arguments[1]);", database, db)
 
     def _upload_json(self):
         # Create second json
@@ -72,6 +72,7 @@ class PharmitControl:
         self._search_loop()
         for db in self.db_tuple:
             self.driver.switch_to.window(f"{db}")
+            self._change_db(db)
             search = self.driver.find_element(By.XPATH, '//*[@id="pharmitsearchbutton"]')
             time.sleep(2)
             search.click()
@@ -79,7 +80,8 @@ class PharmitControl:
 
     def _search_loop(self):
         while True:
-            minimize_button = self.driver.find_element(By.XPATH, '//*[@id="pharmit"]/div[1]/div[4]/div[3]/div/button[1]')
+            minimize_button = self.driver.find_element(By.XPATH,
+                                                       '//*[@id="pharmit"]/div[1]/div[4]/div[3]/div/button[1]')
             try:
                 no_results = self.driver.find_element(By.CLASS_NAME, "dataTables_empty")
                 if no_results.text == 'No results found':
@@ -94,8 +96,8 @@ class PharmitControl:
             else:
                 time.sleep(1)
         if self.proceed:
-            pass
-            #self._download(minimize_button)
+            self.proceed = False
+            self._download(minimize_button)
 
     def _download(self, minimize_button):
         # Minimize
@@ -115,17 +117,17 @@ class PharmitControl:
             time.sleep(1)
 
     def run(self):
-        full_tuple = ('molport', 'chembl', 'chemdiv', 'chemspace', 'mcule', 'ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc')
+        full_tuple = ('molport', 'chembl', 'chemdiv', 'chemspace', 'mcule', 'ultimate', 'nsc',
+                      'pubchem', 'wuxi-lab', 'zinc')
         self._upload_complex()
         self._get_json()
         for i in range(2):
             if i == 0:
-                self.db_tuple = full_tuple[:4]
+                self.db_tuple = full_tuple[:5]
             else:
-                self.db_tuple = full_tuple[4:]
+                self.db_tuple = full_tuple[5:]
             self._open_tabs()
             self._upload_json()
-            self._change_db()
             self._search()
             break
-            #self.driver.close()
+            # self.driver.quit()
