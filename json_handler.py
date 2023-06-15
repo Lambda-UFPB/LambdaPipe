@@ -9,18 +9,18 @@ class JsonHandler:
 
     @staticmethod
     def _load_json():
-        download_path, new_path = utils.get_path("pharmit.json")
-        cmd_2 = f"mv {download_path} {new_path}"
-        while True:
-            if os.path.exists(download_path):
-                os.system(cmd_2)
-                with open(f"{new_path}/pharmit.json", 'r') as file:
-                    session = json.load(file)
-                    break
+        download_path = utils.get_last_file()
+        new_path = f"{os.getcwd()}/files"
+        cmd_2 = f"cp '{download_path}' {new_path}"
+        session_file = utils.get_file_name(download_path)
+        os.system(cmd_2)
+        with open(f"{new_path}/{session_file}", 'r') as file:
+            session = json.load(file)
+
         return session
 
     def _pharma_switch(self):
-        for i, switch in enumerate(self.session["points"]):
+        for switch in self.session["points"][4:19]:
             switch["enabled"] = False
 
     def create_json(self):
