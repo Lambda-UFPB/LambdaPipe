@@ -16,6 +16,7 @@ class PharmitControl:
                          'zinc')
         self.proceed = False
         self.driver = webdriver.Chrome(options=options)
+        self.minimize_count = 0
 
     def _open_tab(self, count,  db):
         if count <= 4:
@@ -120,6 +121,7 @@ class PharmitControl:
             if save_button.is_enabled():
                 time.sleep(1)
                 save_button.click()
+                self.minimize_count += 1
                 break
             time.sleep(1)
 
@@ -136,3 +138,4 @@ class PharmitControl:
                 self._search_loop(count)
         time.sleep(5)
         self.driver.quit()
+        return self.minimize_count
