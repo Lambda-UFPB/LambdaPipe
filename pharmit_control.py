@@ -12,20 +12,28 @@ class PharmitControl:
     def __init__(self):
         options = Options()
         options.add_experimental_option('detach', True)
-        self.db_tuple = ()
+        self.db_tuple = ('molport', 'chembl', 'chemdiv', 'chemspace', 'mcule', 'ultimate', 'nsc', 'pubchem', 'wuxi-lab',
+                         'zinc')
         self.proceed = False
         self.driver = webdriver.Chrome(options=options)
 
-    def _open_tabs(self):
-        main_tab = self.driver.current_window_handle
-        for db in self.db_tuple:
+    def _open_tab(self, count,  db):
+        if count <= 4:
+            main_tab = self.driver.current_window_handle
+
             self.driver.execute_script(f"window.open('about:blank','{db}');")
             self.driver.switch_to.window(f"{db}")
             self.driver.get("https://pharmit.csb.pitt.edu/search.html")
             time.sleep(3)
-        self.driver.switch_to.window(main_tab)
+            if count == 0:
+                self._close_tab(main_tab)
+        else:
+            pass
+
+    def _close_tab(self, tab):
+        self.driver.switch_to.window(tab)
         self.driver.close()
-        self.driver.switch_to.window(f"{self.db_tuple[-1]}")
+        #self.driver.switch_to.window(f"{self.db_tuple[0]}")
 
     def _upload_complex(self):
         # Get page
@@ -44,60 +52,60 @@ class PharmitControl:
         time.sleep(3)
         self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/button').click()
 
-    def _change_db(self, db):
+    def _change_db(self, count, db):
         time.sleep(3)
+        if count >= 5:
+            self.driver.switch_to.window(f"{self.db_tuple[count - 5]}")
         database = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[1]/button[1]')
         self.driver.execute_script("arguments[0].setAttribute('value', arguments[1]);", database, db)
 
-    def _upload_json(self):
-        # Create second json
+    @staticmethod
+    def _create_json():
+        time.sleep(3)
         jsh = JsonHandler()
-        jsh.create_json()
+        modified_json_path = jsh.create_json()
+        return modified_json_path
 
-        # Upload session
-        load_session = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/div/input')
-        load_session.send_keys("/home/kdunorat/Documentos/LambdaPipe/files/file_1.json")
-        for db in self.db_tuple:
+    def _upload_json(self, count, db, modified_json_path):
+        # Create second json
+        if count <= 4:
+            # Upload session
             self.driver.switch_to.window(f"{db}")
             load_session = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/div/input')
-            load_session.send_keys("/home/kdunorat/Documentos/LambdaPipe/files/file_1.json")
+            load_session.send_keys(modified_json_path)
             time.sleep(3)
+        else:
+            pass
 
-    def _search(self):
-        # Modificar o value (banco de dados) dps
-        # Search
+    def _search(self, count, db):
+        # Click on the search button
         search = self.driver.find_element(By.XPATH, '//*[@id="pharmitsearchbutton"]')
         time.sleep(2)
         search.click()
-        self._search_loop()
-        for db in self.db_tuple:
-            self.driver.switch_to.window(f"{db}")
-            self._change_db(db)
-            search = self.driver.find_element(By.XPATH, '//*[@id="pharmitsearchbutton"]')
-            time.sleep(2)
-            search.click()
-            self._search_loop()
 
-    def _search_loop(self):
-        while True:
-            minimize_button = self.driver.find_element(By.XPATH,
-                                                       '//*[@id="pharmit"]/div[1]/div[4]/div[3]/div/button[1]')
-            try:
-                no_results = self.driver.find_element(By.CLASS_NAME, "dataTables_empty")
-                if no_results.text == 'No results found':
-                    print(no_results.text)
+    def _search_loop(self, count):
+        for n in range(count - count, 5):
+            print(n)
+            self.driver.switch_to.window(f"{self.db_tuple[n]}")
+            while True:
+                minimize_button = self.driver.find_element(By.XPATH,
+                                                           '//*[@id="pharmit"]/div[1]/div[4]/div[3]/div/button[1]')
+                try:
+                    no_results = self.driver.find_element(By.CLASS_NAME, "dataTables_empty")
+                    if no_results.text == 'No results found':
+                        print(no_results.text)
+                        break
+                except NoSuchElementException:
+                    pass
+
+                if minimize_button.is_enabled():
+                    self.proceed = True
                     break
-            except NoSuchElementException:
-                pass
-
-            if minimize_button.is_enabled():
-                self.proceed = True
-                break
-            else:
-                time.sleep(1)
-        if self.proceed:
-            self.proceed = False
-            self._download(minimize_button)
+                else:
+                    time.sleep(1)
+            if self.proceed:
+                self.proceed = False
+                self._download(minimize_button)
 
     def _download(self, minimize_button):
         # Minimize
@@ -117,17 +125,15 @@ class PharmitControl:
             time.sleep(1)
 
     def run(self):
-        full_tuple = ('molport', 'chembl', 'chemdiv', 'chemspace', 'mcule', 'ultimate', 'nsc',
-                      'pubchem', 'wuxi-lab', 'zinc')
         self._upload_complex()
         self._get_json()
-        for i in range(2):
-            if i == 0:
-                self.db_tuple = full_tuple[:5]
-            else:
-                self.db_tuple = full_tuple[5:]
-            self._open_tabs()
-            self._upload_json()
-            self._search()
-            break
-            # self.driver.quit()
+        modified_json_path = PharmitControl._create_json()
+        for count, db in enumerate(self.db_tuple):
+            self._open_tab(count, db)
+            self._upload_json(count, db, modified_json_path)
+            self._change_db(count, db)
+            self._search(count, db)
+            if count == 4 or count == 9:
+                self._search_loop(count)
+        time.sleep(5)
+        self.driver.quit()

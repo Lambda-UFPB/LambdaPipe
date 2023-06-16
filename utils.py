@@ -27,5 +27,9 @@ def get_last_file():
         if 'pharmit' in file:
             only_pharmit.append(file)
     pharmit_files = [os.path.join(download_path, file) for file in only_pharmit]
-    most_recent = max(pharmit_files, key=os.path.getmtime)
+    while True:
+        most_recent = max(pharmit_files, key=os.path.getmtime)
+        if 'crdownload' not in most_recent:
+            break
+
     return most_recent
