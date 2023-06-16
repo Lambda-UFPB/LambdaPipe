@@ -33,7 +33,6 @@ class PharmitControl:
     def _close_tab(self, tab):
         self.driver.switch_to.window(tab)
         self.driver.close()
-        #self.driver.switch_to.window(f"{self.db_tuple[0]}")
 
     def _upload_complex(self):
         # Get page
@@ -77,7 +76,7 @@ class PharmitControl:
         else:
             pass
 
-    def _search(self, count, db):
+    def _search(self):
         # Click on the search button
         search = self.driver.find_element(By.XPATH, '//*[@id="pharmitsearchbutton"]')
         time.sleep(2)
@@ -132,7 +131,7 @@ class PharmitControl:
             self._open_tab(count, db)
             self._upload_json(count, db, modified_json_path)
             self._change_db(count, db)
-            self._search(count, db)
+            self._search()
             if count == 4 or count == 9:
                 self._search_loop(count)
         time.sleep(5)
