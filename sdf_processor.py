@@ -21,7 +21,8 @@ class SdfProcessor:
             self.sdf_files.append(unzipped_path)
 
     def run(self):
-        self._get_sdfs()
+        pass
+        # self._get_sdfs()
 
 
 if __name__ == '__main__':
