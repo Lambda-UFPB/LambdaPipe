@@ -46,6 +46,7 @@ class PharmitControl:
         time.sleep(3)
         receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
         receptor.send_keys("/home/kdunorat/Documentos/LambdaPipe/files/7KR1.pdbqt")
+        files_path = f"{os.getcwd()}/files"
 
     def _get_json(self):
         # Download first json
