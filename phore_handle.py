@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class Phore:
+class Vertex:
     class Types(Enum):
         METAL_COMPLEX = 1
         SALT_POSITIVE = 2
@@ -26,30 +26,9 @@ class Phore:
         self.restype = restype
         self.quant = quant
         self.name = f'Phore_{hash(self)}'
-
-
-    def __eq__(self, other):
-        if self.coor_x == other.coor_x and self.coor_y == other.coor_y and self.coor_z == other.coor_z and self.radius == other.radius and self.ptype == self.ptype:
-            return True
-        else:
-            return False
-
-
-
-    def __hash__(self):
-        return hash((self.coor_x, self.coor_y, self.coor_z, self.radius, self.ptype))
-
-
-    def __str__(self):
-        return f'Phore (Name: {self.name}; Type: {self.ptype.name}; Radius: {self.radius}; Coordinates: {self.coor_x}, {self.coor_y}, {self.coor_z}; Chain: {self.reschain}; Residue: {self.restype} {self.resnr}; Quantity: {self.quant})'
-
-
-class Vertex:
-    def __init__(self, phore):
-        self.phore = phore
         self.adj = set()
-    
 
+    
     def _add_adj(self, vertex):
         self.adj.add(vertex)
 
@@ -67,16 +46,19 @@ class Vertex:
 
 
     def __eq__(self, other):
-        return self.phore == other.phore
+        if self.coor_x == other.coor_x and self.coor_y == other.coor_y and self.coor_z == other.coor_z and self.radius == other.radius and self.ptype == self.ptype:
+            return True
+        else:
+            return False
 
 
     def __hash__(self):
-        return hash(self.phore)
+        return hash((self.coor_x, self.coor_y, self.coor_z, self.radius, self.ptype))
 
 
     def __str__(self):
         adj_list = sorted(self.adj, key=lambda x: x.phore.ptype.value)
-        return f'{str(self.phore)}, Adjacency ({[v.phore.name for v in adj_list]})'
+        return f'Phore (Name: {self.name}; Type: {self.ptype.name}; Radius: {self.radius}; Coordinates: {self.coor_x}, {self.coor_y}, {self.coor_z}; Chain: {self.reschain}; Residue: {self.restype} {self.resnr}; Quantity: {self.quant}), Adjacency ({[self.name for v in adj_list]})'
 
 
 class Graph:
