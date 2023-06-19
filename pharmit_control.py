@@ -5,6 +5,7 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from json_handler import JsonHandler
 import time
+import os
 
 
 class PharmitControl:
@@ -16,6 +17,7 @@ class PharmitControl:
                          'zinc')
         self.proceed = False
         self.driver = webdriver.Chrome(options=options)
+        self.minimize_count = 0
 
     def _open_tab(self, count,  db):
         if count <= 4:
@@ -40,11 +42,11 @@ class PharmitControl:
         self.driver.implicitly_wait(3)
         # Upload ligand
         ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
-        ligand.send_keys("/home/kdunorat/Documentos/LambdaPipe/files/7KR1-pocket3-remdesivir-cid76325302.pdbqt")
+        ligand.send_keys(f"{os.getcwd()}/files/7KR1-pocket3-remdesivir-cid76325302.pdbqt")
         # Upload receptor
         time.sleep(3)
         receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
-        receptor.send_keys("/home/kdunorat/Documentos/LambdaPipe/files/7KR1.pdbqt")
+        receptor.send_keys(f"{os.getcwd()}/files/7KR1.pdbqt")
 
     def _get_json(self):
         # Download first json
@@ -114,12 +116,13 @@ class PharmitControl:
             self.driver.switch_to.alert.dismiss()
         except NoAlertPresentException:
             pass
+        save_button = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[3]/div[3]/div[2]/button')
         # Saving
         while True:
-            save_button = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[3]/div[3]/div[2]/button')
             if save_button.is_enabled():
                 time.sleep(1)
                 save_button.click()
+                self.minimize_count += 1
                 break
             time.sleep(1)
 
@@ -136,3 +139,4 @@ class PharmitControl:
                 self._search_loop(count)
         time.sleep(5)
         self.driver.quit()
+        return self.minimize_count

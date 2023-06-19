@@ -9,13 +9,12 @@ class JsonHandler:
 
     @staticmethod
     def _load_json():
-        download_path = utils.get_last_file()
-        new_path = f"{os.getcwd()}/files"
-        cmd_2 = f"cp '{download_path}' {new_path}"
+        download_path = utils.get_last_files('pharmit')
+        files_path = f"{os.getcwd()}/files"
         session_file = utils.get_file_name(download_path)
-        os.system(cmd_2)
+        utils.transfer_to_folder(download_path, files_path,  'cp')
 
-        with open(f"{new_path}/{session_file}", 'r') as file:
+        with open(f"{files_path}/{session_file}", 'r') as file:
             session = json.load(file)
 
         return session
@@ -35,4 +34,3 @@ class JsonHandler:
 if __name__ == '__main__':
     jsh = JsonHandler()
     jsh.create_json()
-
