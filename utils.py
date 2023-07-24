@@ -14,7 +14,6 @@ def transfer_to_folder(old_path: str, new_path: str, opt: str):
 
 
 def unzip(zipped_path):
-    # vai ter que pegar o último
     unzipped_path = zipped_path.replace(".gz", "")
     with gzip.open(zipped_path, 'rb') as zipped:
         with open(unzipped_path, 'wb') as unzipped:

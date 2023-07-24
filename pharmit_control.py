@@ -86,7 +86,6 @@ class PharmitControl:
 
     def _search_loop(self, count):
         for n in range(count - count, 5):
-            print(n)
             self.driver.switch_to.window(f"{self.db_tuple[n]}")
             while True:
                 minimize_button = self.driver.find_element(By.XPATH,
