@@ -4,6 +4,7 @@ from rdkit import Chem
 import timeit
 
 
+
 class SdfProcessor:
     def __init__(self, minimize_count):
         self.minimize_count = minimize_count
@@ -26,10 +27,11 @@ class SdfProcessor:
             self.sdf_files.append(unzipped_path)
 
     def _process_sdf(self):
+        # Remover a lista sdf_files
         analyzed_mol = set()
         sdf_files = ['/home/kdunorat/projetos/LambdaPipe/files/minimized_results (9).sdf', '/home/kdunorat/projetos/LambdaPipe/files/minimized_results (8).sdf', '/home/kdunorat/projetos/LambdaPipe/files/minimized_results (7).sdf', '/home/kdunorat/projetos/LambdaPipe/files/minimized_results (6).sdf', '/home/kdunorat/projetos/LambdaPipe/files/minimized_results (5).sdf', '/home/kdunorat/projetos/LambdaPipe/files/minimized_results (4).sdf', '/home/kdunorat/projetos/LambdaPipe/files/minimized_results (3).sdf', '/home/kdunorat/projetos/LambdaPipe/files/minimized_results (2).sdf', '/home/kdunorat/projetos/LambdaPipe/files/minimized_results (1).sdf', '/home/kdunorat/projetos/LambdaPipe/files/minimized_results.sdf']
         for file in sdf_files:
-            mol_supplier = Chem.SDMolSupplier(file)
+            mol_supplier = Chem.SDMolSupplier(file, strictParsing=False, sanitize=False, removeHs=False)
             for index, mol in enumerate(mol_supplier):
                 if index < 5:
                     try:
@@ -37,7 +39,6 @@ class SdfProcessor:
                         mol_ids_set = {i for i in mol_ids.split(' ')}
                     except AttributeError:
                         continue
-                    print(f'{file}-----{mol_ids}')
                     score = float(mol.GetProp("minimizedAffinity"))
                     if self._mol_check(mol_ids_set, analyzed_mol, score):
                         self.best_molecules[mol_ids] = score
@@ -58,4 +59,4 @@ class SdfProcessor:
 if __name__ == '__main__':
     sdf = SdfProcessor(10)
     execution_time = timeit.timeit(sdf.run, number=1)
-    print(execution_time/60)
+    print(execution_time)
