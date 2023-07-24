@@ -31,7 +31,7 @@ class SdfProcessor:
         """Generate dict with Molecule ID: (score, smiles)"""
         analyzed_mol = set()
         for file in self.sdf_files:
-            mol_supplier = Chem.SDMolSupplier(file, strictParsing=False, sanitize=False)
+            mol_supplier = Chem.SDMolSupplier(file, strictParsing=True, sanitize=False)
             for index, mol in enumerate(mol_supplier):
                 if index < 5:
                     try:
