@@ -3,6 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
+from selenium.webdriver.chrome.service import Service
 from json_handler import JsonHandler
 import time
 import os
@@ -13,10 +14,12 @@ class PharmitControl:
     def __init__(self):
         options = Options()
         options.add_experimental_option('detach', True)
-        self.db_tuple = ('molport', 'chembl', 'chemdiv', 'chemspace', 'mcule', 'ultimate', 'nsc', 'pubchem', 'wuxi-lab',
+        self.db_tuple = ('molport', 'mcule', 'ultimate', 'nsc', 'pubchem', 'wuxi-lab',
                          'zinc')
         self.proceed = False
-        self.driver = webdriver.Chrome(options=options)
+        chrome_driver_path = '/home/kdunorat/projetos/LambdaPipe/chromedriver/chromedriver'
+        service = Service(executable_path=chrome_driver_path)
+        self.driver = webdriver.Chrome(service=service, options=options)
         self.minimize_count = 0
 
     def _open_tab(self, count,  db):
@@ -126,12 +129,12 @@ class PharmitControl:
             time.sleep(1)
 
     def run(self):
-        self._upload_complex()
-        self._get_json()
+        #self._upload_complex()
+        #self._get_json()
         modified_json_path = PharmitControl._create_json()
         for count, db in enumerate(self.db_tuple):
             self._open_tab(count, db)
-            self._upload_json(count, db, modified_json_path)
+            self._upload_json(count, db, '/home/kdunorat/Área de Trabalho/pharmit.json')
             self._change_db(count, db)
             self._search()
             if count == 4 or count == 9:
@@ -139,3 +142,7 @@ class PharmitControl:
         time.sleep(5)
         self.driver.quit()
         return self.minimize_count
+
+if __name__ == '__main__':
+    pc = PharmitControl()
+    minimize_count = pc.run()

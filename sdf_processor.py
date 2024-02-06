@@ -2,7 +2,7 @@ import utils
 import os
 from rdkit import Chem
 import timeit
-
+import json
 
 class SdfProcessor:
     """Selects the best molecules from sdf files"""
@@ -33,31 +33,39 @@ class SdfProcessor:
         for file in self.sdf_files:
             mol_supplier = Chem.SDMolSupplier(file, strictParsing=True, sanitize=False)
             for index, mol in enumerate(mol_supplier):
-                if index < 5:
-                    try:
-                        mol_ids = mol.GetProp("_Name")
-                        mol_ids_set = {i for i in mol_ids.split(' ')}
-                    except AttributeError:
-                        continue
-                    score = float(mol.GetProp("minimizedAffinity"))
-                    if self._mol_check(mol_ids_set, analyzed_mol, score):
-                        smiles = Chem.MolToSmiles(mol, isomericSmiles=False)
-                        self.best_molecules[mol_ids] = (score, smiles)
-                        analyzed_mol = analyzed_mol.union(mol_ids_set)
-        print(self.best_molecules)
+                try:
+                    mol_ids = mol.GetProp("_Name")
+                    mol_ids_set = {i for i in mol_ids.split(' ')}
+                except AttributeError:
+                    continue
+                score = float(mol.GetProp("minimizedAffinity"))
+                if self._mol_check(mol_ids_set, analyzed_mol, score):
+                    smiles = Chem.MolToSmiles(mol, isomericSmiles=False)
+                    self.best_molecules[mol_ids] = (score, smiles)
+                    analyzed_mol = analyzed_mol.union(mol_ids_set)
+        return self.best_molecules
+    
+    @staticmethod
+    def _create_final_json(best_mol_dict: dict):
+        with open('LastResults.json', 'w') as lr:
+            json.dump(best_mol_dict, lr)
+            
+        
+        
 
     @staticmethod
-    def _mol_check(mol_ids_set: set, analyzed_mol: set, score: float):
+    def _mol_check(mol_ids_set: set, analyzed_mol: set, score: float) -> bool:
         if not mol_ids_set.intersection(analyzed_mol):
-            if score < -12:
+            if score < -10:
                 return True
 
     def run(self):
         self._get_sdfs()
-        self._process_sdf()
+        best_molecules = self._process_sdf()
+        SdfProcessor._create_final_json(best_molecules)
 
 
 if __name__ == '__main__':
-    sdf = SdfProcessor(10)
+    sdf = SdfProcessor(1)
     execution_time = timeit.timeit(sdf.run, number=1)
     print(execution_time)
