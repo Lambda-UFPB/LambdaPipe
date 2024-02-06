@@ -143,6 +143,7 @@ class PharmitControl:
         self.driver.quit()
         return self.minimize_count
 
+
 if __name__ == '__main__':
     pc = PharmitControl()
     minimize_count = pc.run()
