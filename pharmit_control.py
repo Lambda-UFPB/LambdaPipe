@@ -1,12 +1,15 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import WebDriverException
 from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from json_handler import JsonHandler
 import time
 import os
+import utils
 
 
 class PharmitControl:
@@ -14,12 +17,19 @@ class PharmitControl:
     def __init__(self):
         options = Options()
         options.add_experimental_option('detach', True)
-        self.db_tuple = ('molport', 'mcule', 'ultimate', 'nsc', 'pubchem', 'wuxi-lab',
+        self.db_tuple = ('chembl', 'chemdiv','enamine', 'molport', 'mcule', 'ultimate', 'nsc', 'pubchem', 'wuxi-lab',
                          'zinc')
         self.proceed = False
-        chrome_driver_path = '/home/kdunorat/projetos/LambdaPipe/chromedriver/chromedriver'
-        service = Service(executable_path=chrome_driver_path)
-        self.driver = webdriver.Chrome(service=service, options=options)
+        self.project_dir = os.getcwd()
+        chrome_options = Options()
+        possible_chrome_binary_locations = utils.get_chrome_binary_path()
+        for chrome_location in possible_chrome_binary_locations:
+            try:
+                chrome_options.binary_location = chrome_location
+                service = Service(ChromeDriverManager().install())
+                self.driver = webdriver.Chrome(service=service, options=chrome_options)
+            except WebDriverException:
+                continue
         self.minimize_count = 0
 
     def _open_tab(self, count,  db):
@@ -45,11 +55,11 @@ class PharmitControl:
         self.driver.implicitly_wait(3)
         # Upload ligand
         ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
-        ligand.send_keys(f"{os.getcwd()}/files/7KR1-pocket3-remdesivir-cid76325302.pdbqt")
+        ligand.send_keys(f"{self.project_dir}/files/7KR1-pocket3-remdesivir-cid76325302.pdbqt")
         # Upload receptor
         time.sleep(3)
         receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
-        receptor.send_keys(f"{os.getcwd()}/files/7KR1.pdbqt")
+        receptor.send_keys(f"{self.project_dir}/files/7KR1.pdbqt")
 
     def _get_json(self):
         # Download first json
@@ -71,7 +81,6 @@ class PharmitControl:
         return modified_json_path
 
     def _upload_json(self, count, db, modified_json_path):
-        # Create second json
         if count <= 4:
             # Upload session
             self.driver.switch_to.window(f"{db}")
@@ -129,12 +138,12 @@ class PharmitControl:
             time.sleep(1)
 
     def run(self):
-        #self._upload_complex()
-        #self._get_json()
+        self._upload_complex()
+        self._get_json()
         modified_json_path = PharmitControl._create_json()
         for count, db in enumerate(self.db_tuple):
             self._open_tab(count, db)
-            self._upload_json(count, db, '/home/kdunorat/Área de Trabalho/pharmit.json')
+            self._upload_json(count, db, modified_json_path)
             self._change_db(count, db)
             self._search()
             if count == 4 or count == 9:
