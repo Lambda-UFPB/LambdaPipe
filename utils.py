@@ -1,6 +1,7 @@
 import os
 import glob
 import gzip
+import pandas as pd
 
 
 def transfer_to_folder(old_path: str, new_path: str, opt: str):
@@ -13,15 +14,12 @@ def get_file_name(path: str):
     file_name = file_name[-1]
     return file_name
 
-
-def unzip(zipped_path):
-    unzipped_path = zipped_path.replace(".gz", "")
-    with gzip.open(zipped_path, 'rb') as zipped:
-        with open(unzipped_path, 'wb') as unzipped:
-            unzipped.write(zipped.read())
-    os.remove(zipped_path)
-    return unzipped_path
-
+def merge_csv(csv_files_path: str):
+    csv_files = glob.glob(f"{csv_files_path}/*.csv")
+    merged_csv = pd.concat([pd.read_csv(file) for file in csv_files])
+    merged_csv.to_csv(f"{csv_files_path}/merged.csv", index=False)
+    for f in csv_files:
+        os.remove(f)
 
 def get_chrome_binary_path():
     cmd_a = "which google-chrome"
@@ -30,6 +28,13 @@ def get_chrome_binary_path():
     possible_path_2 = os.popen(cmd_b).read()
     return [possible_path_1.replace("\n", ""), possible_path_2.replace("\n", "")]
 
+def unzip(zipped_path):
+    unzipped_path = zipped_path.replace(".gz", "")
+    with gzip.open(zipped_path, 'rb') as zipped:
+        with open(unzipped_path, 'wb') as unzipped:
+            unzipped.write(zipped.read())
+    os.remove(zipped_path)
+    return unzipped_path
 
 def get_last_files(file_pattern: str, minimize_count: int = None):
     cmd_1 = "xdg-user-dir DOWNLOAD"
@@ -51,5 +56,7 @@ def get_last_files(file_pattern: str, minimize_count: int = None):
      
 
 if __name__ == '__main__':
-    a = get_last_files('minimized_results*', 10)
+    #a = get_last_files('minimized_results*', 10)
+    #merge_csv('/home/kdunorat/Projetos/LambdaPipe/admet')
     #print(get_chrome_binary_path())
+    pass
