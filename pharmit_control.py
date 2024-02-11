@@ -53,13 +53,14 @@ class PharmitControl:
         # Get page
         self.driver.get("https://pharmit.csb.pitt.edu/search.html")
         self.driver.implicitly_wait(3)
+        # Upload receptor
+        receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
+        receptor.send_keys(f"{self.project_dir}/files/7KR1.pdbqt")
+        time.sleep(3)
         # Upload ligand
         ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
         ligand.send_keys(f"{self.project_dir}/files/7KR1-pocket3-remdesivir-cid76325302.pdbqt")
-        # Upload receptor
-        time.sleep(3)
-        receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
-        receptor.send_keys(f"{self.project_dir}/files/7KR1.pdbqt")
+        
 
     def _get_json(self):
         # Download first json

@@ -1,4 +1,5 @@
 import os
+import glob
 import gzip
 
 
@@ -30,29 +31,25 @@ def get_chrome_binary_path():
     return [possible_path_1.replace("\n", ""), possible_path_2.replace("\n", "")]
 
 
-def get_last_files(name: str):
+def get_last_files(file_pattern: str, minimize_count: int = None):
     cmd_1 = "xdg-user-dir DOWNLOAD"
     download_path = os.popen(cmd_1).read()
     download_path = download_path.replace("\n", "")
-    all_files = os.listdir(download_path)
-    only_name = []
-    for file in all_files:
-        if name in file:
-            only_name.append(file)
-    name_files = [os.path.join(download_path, file) for file in only_name]
+    download_list = glob.glob(os.path.join(download_path, file_pattern))
 
-    if name == 'pharmit':
+    download_list.sort(key=os.path.getmtime, reverse=True)
+    
+    if file_pattern == 'pharmit*.json':
         while True:
-            most_recent = max(name_files, key=os.path.getmtime)
+            most_recent = download_list[0]
             if 'crdownload' not in most_recent:
                 break
-
-    else:
-        most_recent = sorted(name_files, key=os.path.getmtime, reverse=True)
-
+    if minimize_count:
+        most_recent = download_list[:minimize_count]
+    
     return most_recent
+     
 
 if __name__ == '__main__':
-    #a = get_last_files('pharmit')
-    #print(a)
-    print(get_chrome_binary_path())
+    a = get_last_files('minimized_results*', 10)
+    #print(get_chrome_binary_path())
