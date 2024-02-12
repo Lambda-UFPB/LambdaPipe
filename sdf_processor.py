@@ -41,7 +41,6 @@ class SdfProcessor:
 
     def _process_sdf(self):
         """Generate dict with Molecule ID: (score, smiles)"""
-        analyzed_mol = set()
 
         for file in self.sdf_files:
             lg = RDLogger.logger()
@@ -55,10 +54,10 @@ class SdfProcessor:
                     continue
                 score = float(mol.GetProp("minimizedAffinity"))
                 rmsd = float(mol.GetProp("minimizedRMSD"))
-                if self._mol_check(mol_ids_set, analyzed_mol, score, rmsd):
+                if self._mol_check(mol_ids_set, score, rmsd):
                     smiles = Chem.MolToSmiles(mol, isomericSmiles=False)
                     self.best_molecules.append((mol_ids, score, rmsd, smiles))
-                    self.analyzed_mol = analyzed_mol.union(mol_ids_set)
+                    self.analyzed_mol = self.analyzed_mol.union(mol_ids_set)
     
     
     def _get_top_50(self):
@@ -66,10 +65,9 @@ class SdfProcessor:
         self.best_molecules.sort(key=lambda x: x[1], reverse=True)
         self.best_molecules = self.best_molecules[:50]
     
-    @staticmethod
-    def _mol_check(mol_ids_set: set, analyzed_mol: set, score: float, rmsd: float) -> bool:
+    def _mol_check(self, mol_ids_set: set, score: float, rmsd: float) -> bool:
         """Check if the molecule is already in the analyzed_mol set and if it fits the threshold (score < -11 and rmsd < 7)"""
-        if not mol_ids_set.intersection(analyzed_mol):
+        if not mol_ids_set.intersection(self.analyzed_mol):
             if score < -11 and rmsd < 7:
                 return True
 
@@ -78,6 +76,7 @@ class SdfProcessor:
         self._extract_sdf_files(last_files)
         self._process_sdf()
         if self.best_molecules:
+            
             if len(self.best_molecules) > 50:
                 self._get_top_50()
         else:

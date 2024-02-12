@@ -57,6 +57,6 @@ def get_last_files(file_pattern: str, minimize_count: int = None):
 
 if __name__ == '__main__':
     #a = get_last_files('minimized_results*', 10)
-    #merge_csv('/home/kdunorat/Projetos/LambdaPipe/admet')
+    merge_csv('/home/kdunorat/Projetos/LambdaPipe/admet')
     #print(get_chrome_binary_path())
     pass
