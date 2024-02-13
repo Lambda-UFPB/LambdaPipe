@@ -1,8 +1,6 @@
 import utils
 import os
 from rdkit import RDLogger, Chem
-import timeit
-import json
 
 
 class SdfProcessor:
@@ -44,7 +42,7 @@ class SdfProcessor:
 
         for file in self.sdf_files:
             lg = RDLogger.logger()
-            lg.setLevel(RDLogger.CRITICAL) # Suppresses RDKit warnings
+            lg.setLevel(RDLogger.CRITICAL)  # Suppresses RDKit warnings
             mol_supplier = Chem.SDMolSupplier(file, strictParsing=True, sanitize=False)
             for index, mol in enumerate(mol_supplier):
                 try:
@@ -58,34 +56,40 @@ class SdfProcessor:
                     smiles = Chem.MolToSmiles(mol, isomericSmiles=False)
                     self.best_molecules.append((mol_ids, score, rmsd, smiles))
                     self.analyzed_mol = self.analyzed_mol.union(mol_ids_set)
-    
-    
-    def _get_top_50(self):
+
+    def _get_top_molecules(self, top: int):
         """Get the top 50 molecules"""
         self.best_molecules.sort(key=lambda x: x[1], reverse=True)
-        self.best_molecules = self.best_molecules[:50]
+        self.best_molecules = self.best_molecules[:top]
     
     def _mol_check(self, mol_ids_set: set, score: float, rmsd: float) -> bool:
-        """Check if the molecule is already in the analyzed_mol set and if it fits the threshold (score < -11 and rmsd < 7)"""
+        """Check if the molecule is already in the analyzed_mol
+        set and if it fits the threshold (score < -11 and rmsd < 7)"""
         if not mol_ids_set.intersection(self.analyzed_mol):
             if score < -11 and rmsd < 7:
                 return True
 
-    def run(self):
+    def _get_best_molecules_dict(self):
+        """Returns a dict with the top best molecules"""
+        return {mol[0]: {'score': mol[1], 'rmsd': mol[2], 'smiles': mol[3]} for mol in self.best_molecules}
+
+    def run(self, top: int):
         last_files = self._get_sdfs()
         self._extract_sdf_files(last_files)
         self._process_sdf()
         if self.best_molecules:
             
-            if len(self.best_molecules) > 50:
-                self._get_top_50()
+            if len(self.best_molecules) > top:
+                self._get_top_molecules(top)
+            else:
+                raise ValueError(f'No sufficient molecules ({top}) to fit the threshold found')
         else:
             raise ValueError('No molecules that fit the threshold found')
         
-        return self.best_molecules
+        return self._get_best_molecules_dict()
 
 
 if __name__ == '__main__':
     sdf = SdfProcessor(10)
-    lista_final = sdf.run()
-    print(lista_final)
+    dict_final = sdf.run(50)
+    print(dict_final)
