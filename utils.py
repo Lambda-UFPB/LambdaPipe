@@ -27,7 +27,6 @@ def get_file_name(path: str):
 
 def merge_csv(csv_files_path: str):
     csv_files = glob.glob(f"{csv_files_path}/admetcsv_*.csv")
-    print(csv_files)
     csv_files.sort(key=lambda x: int(re.findall(r'admetcsv_(\d+)\.csv', x)[0]))
     merged_csv = pd.concat([pd.read_csv(file) for file in csv_files])
     merged_csv.to_csv(f"{csv_files_path}/merged.csv", index=False)

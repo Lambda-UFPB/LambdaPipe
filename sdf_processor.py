@@ -31,7 +31,7 @@ class SdfProcessor:
     def _extract_sdf_files(self, last_files: list):
         """Extracts the .sdf files from the .gz files"""
         for file in last_files:
-            utils.transfer_to_folder(file, self.files_path, 'cp')
+            utils.transfer_to_folder(file, self.files_path, 'mv')
             file_name = utils.get_file_name(file)
             zipped_path = f"{self.files_path}/{file_name}"
             unzipped_path = utils.unzip(zipped_path)
@@ -73,7 +73,7 @@ class SdfProcessor:
         """Returns a dict with the top best molecules"""
         return {mol[0]: {'score': mol[1], 'rmsd': mol[2], 'smiles': mol[3]} for mol in self.best_molecules}
 
-    def run(self, top: int):
+    def run_sdfprocessor(self, top: int):
         last_files = self._get_sdfs()
         self._extract_sdf_files(last_files)
         self._process_sdf()

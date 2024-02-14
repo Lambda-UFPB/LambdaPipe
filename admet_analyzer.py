@@ -32,6 +32,17 @@ class AdmetAnalyzer:
                 if dict_smile == smiles_admet:
                     mol_ids.append(molecule_id)
         self.admet_df['Molecule ID'] = mol_ids
+
+    def _get_score_and_rmsd(self):
+        score = []
+        rmsd = []
+        for molecule_id in self.admet_df['Molecule ID']:
+            for key, value in self.best_molecules_dict.items():
+                if molecule_id == key:
+                    score.append(value['score'])
+                    rmsd.append(value['rmsd'])
+        self.admet_df['Score'] = score
+        self.admet_df['RMSD'] = rmsd
         cols = ['Molecule ID'] + [col for col in self.admet_df if col != 'Molecule ID']
         self.admet_df = self.admet_df[cols]
 
@@ -51,10 +62,11 @@ class AdmetAnalyzer:
             if low < parameter_value <= high:
                 return category
 
-    def run(self):
+    def run_admet_analyzer(self):
         self._filter_toxicity()
         self._filter_conditions()
         self._get_molecule_id()
+        self._get_score_and_rmsd()
         category_df = self.admet_df.select_dtypes(include=['float64']).map(AdmetAnalyzer._generate_category_df)
         for column in category_df.columns:
             self.admet_df[column] = self.admet_df[column].astype(object)

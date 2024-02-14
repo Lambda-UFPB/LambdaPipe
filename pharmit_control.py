@@ -138,7 +138,7 @@ class PharmitControl:
                 break
             time.sleep(1)
 
-    def run(self):
+    def run_pharmit_control(self):
         self._upload_complex()
         self._get_json()
         modified_json_path = PharmitControl._create_json()
@@ -156,4 +156,4 @@ class PharmitControl:
 
 if __name__ == '__main__':
     pc = PharmitControl()
-    minimize_count = pc.run()
+    minimize_count = pc.run_pharmit_control()
