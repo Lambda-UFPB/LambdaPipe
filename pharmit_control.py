@@ -8,19 +8,19 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from json_handler import JsonHandler
 import time
-import os
 import utils
 
 
 class PharmitControl:
 
-    def __init__(self):
+    def __init__(self, receptor_path, ligand_path):
+        self.receptor_path = receptor_path
+        self.ligand_path = ligand_path
         options = Options()
         options.add_experimental_option('detach', True)
         self.db_tuple = ('chembl', 'chemdiv','enamine', 'molport', 'mcule', 'ultimate', 'nsc', 'pubchem', 'wuxi-lab',
                          'zinc')
         self.proceed = False
-        self.project_dir = os.getcwd()
         chrome_options = Options()
         possible_chrome_binary_locations = utils.get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -55,12 +55,11 @@ class PharmitControl:
         self.driver.implicitly_wait(3)
         # Upload receptor
         receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
-        receptor.send_keys(f"{self.project_dir}/files/7KR1.pdbqt")
+        receptor.send_keys(self.receptor_path)
         time.sleep(3)
         # Upload ligand
         ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
-        ligand.send_keys(f"{self.project_dir}/files/7KR1-pocket3-remdesivir-cid76325302.pdbqt")
-        
+        ligand.send_keys(self.ligand_path)
 
     def _get_json(self):
         # Download first json
