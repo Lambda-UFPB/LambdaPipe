@@ -8,6 +8,15 @@ import re
 import time
 
 
+def get_absolute_path(path: str):
+    return os.path.abspath(path)
+
+
+def create_stats_file(output_folder_path: str):
+    with open(f'{output_folder_path}/results/search-stats.txt', 'w') as stats:
+       stats.write('Search Log\n\n')
+
+
 def transfer_to_folder(old_path: str, new_path: str, opt: str):
     cmd = f"{opt} '{old_path}' {new_path}"
     os.system(cmd)
@@ -15,8 +24,13 @@ def transfer_to_folder(old_path: str, new_path: str, opt: str):
 
 def generate_folder_name():
     letters_and_digits = string.ascii_letters + string.digits
-
     return ''.join(random.choice(letters_and_digits) for _ in range(8))
+
+
+def get_file_name(path: str):
+    file_name = path.split("/")
+    file_name = file_name[-1]
+    return file_name
 
 
 def create_folders(folder_name: str):
@@ -28,12 +42,6 @@ def create_folders(folder_name: str):
         raise FileExistsError(f"{output_folder_path} already exists")
 
     return output_folder_path
-
-
-def get_file_name(path: str):
-    file_name = path.split("/")
-    file_name = file_name[-1]
-    return file_name
 
 
 def merge_csv(csv_files_path: str):
@@ -60,10 +68,6 @@ def unzip(zipped_path):
             unzipped.write(zipped.read())
     os.remove(zipped_path)
     return unzipped_path
-
-
-def get_absolute_path(path: str):
-    return os.path.abspath(path)
 
 
 def get_last_files(file_pattern: str, minimize_count: int = None):

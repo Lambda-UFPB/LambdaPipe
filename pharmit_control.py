@@ -1,23 +1,24 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import WebDriverException
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import NoAlertPresentException
+from selenium.common.exceptions import WebDriverException, NoSuchElementException, NoAlertPresentException
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+import re
 import time
 import utils
 
 
 class PharmitControl:
 
-    def __init__(self, receptor_path, ligand_path):
+    def __init__(self, receptor_path: str, ligand_path: str, output_folder_path: str):
+        self.output_folder_path = output_folder_path
         self.receptor_path = receptor_path
         self.ligand_path = ligand_path
+        self.total_hits = 0
         options = Options()
         options.add_experimental_option('detach', True)
-        self.db_tuple = ('chembl', 'chemdiv','enamine', 'molport', 'mcule', 'ultimate', 'nsc', 'pubchem', 'wuxi-lab',
+        self.db_tuple = ('chembl', 'chemdiv', 'enamine', 'molport', 'mcule', 'ultimate', 'nsc', 'pubchem', 'wuxi-lab',
                          'zinc')
         self.proceed = False
         chrome_options = Options()
@@ -121,6 +122,8 @@ class PharmitControl:
                     pass
 
                 if minimize_button.is_enabled():
+                    number_of_hits = self._get_screening_stats()
+                    self._write_screening_stats(number_of_hits, self.db_tuple[n])
                     self.proceed = True
                     break
                 else:
@@ -128,6 +131,29 @@ class PharmitControl:
             if self.proceed:
                 self.proceed = False
                 self._download(minimize_button)
+
+    def _get_screening_stats(self):
+        element = self.driver.find_element(By.ID, "DataTables_Table_0_info")
+        number_screening_text = element.text
+        match = re.search(r'(\d[\d,]*)\s*hits', number_screening_text)
+        if match:
+            number_of_hits = match.group(1)
+            number_of_hits_int = number_of_hits.replace(',', '')
+            number_of_hits_int = int(number_of_hits_int)
+        else:
+            number_of_hits = "0"
+            number_of_hits_int = 0
+
+        self.total_hits += number_of_hits_int
+
+        return number_of_hits
+
+    def _write_screening_stats(self, number_of_hits: str, db: str, final=False):
+        with open(f"{self.output_folder_path}/results/search-stats.txt", "a") as stats:
+            stats.write(f"{db}: {number_of_hits} hits\n")
+        if final:
+            with open(f"{self.output_folder_path}/results/search-stats.txt", "a") as stats:
+                stats.write(f"Total hits: {self.total_hits}\n")
 
     def _download(self, minimize_button):
         # Minimize
@@ -158,8 +184,3 @@ class PharmitControl:
         time.sleep(5)
         self.driver.quit()
         return self.minimize_count
-
-
-if __name__ == '__main__':
-    pc = PharmitControl()
-    minimize_count = pc.run_pharmit_control()

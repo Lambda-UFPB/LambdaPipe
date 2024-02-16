@@ -14,7 +14,7 @@ from json_handler import JsonHandler
 from sdf_processor import SdfProcessor
 from admet_request import run_admet_request
 from admet_analyzer import AdmetAnalyzer
-from utils import generate_folder_name, create_folders, get_absolute_path, merge_csv
+from utils import generate_folder_name, create_folders, create_stats_file, get_absolute_path, merge_csv
 import time
 
 
@@ -28,9 +28,10 @@ import time
 def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
     folder_name = output if output else generate_folder_name()
     output_folder_path = create_folders(folder_name)
+    create_stats_file(output_folder_path)
     admet_folder = f"{output_folder_path}/admet"
 
-    phc = PharmitControl(get_absolute_path(receptor_file), get_absolute_path(ligand_file))
+    phc = PharmitControl(get_absolute_path(receptor_file), get_absolute_path(ligand_file), output_folder_path)
     phc.upload_complex()
     phc.get_json()
     jsh = JsonHandler()
@@ -49,18 +50,18 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
     click.echo("Starting pharmit search...")
     minimize_count = phc.run_pharmit_search(modified_json_path)
 
-    click.echo("Processing Results...")
+    click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, rmsd)
     dict_final = sdfp.run_sdfprocessor()
 
-    click.echo("Getting ADMET info...")
+    click.echo("\nGetting ADMET info...")
     smiles_list = run_admet_request(dict_final, output_folder_path)
     merge_csv(admet_folder)
 
-    click.echo("Generating final results...")
+    click.echo("\nGenerating final results...")
     analyzer = AdmetAnalyzer(output_folder_path, admet_folder, dict_final, smiles_list)
     analyzer.run_admet_analyzer()
-    click.echo(f"Go to the {folder_name} directory in files to see the final results")
+    click.echo(f"\nGo to the {folder_name} directory in files to see the final results")
 
 
 if __name__ == "__main__":
