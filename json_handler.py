@@ -14,8 +14,6 @@ class JsonHandler:
 
     def load_json(self):
         session_download_path, dlist = utils.get_last_files('pharmit*.json*')
-        print(session_download_path)
-        print(dlist)
         session_file = utils.get_file_name(session_download_path)
         utils.transfer_to_folder(session_download_path, self.output_file_path,  'cp')
 
