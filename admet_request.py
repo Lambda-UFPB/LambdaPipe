@@ -1,8 +1,6 @@
 import requests
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
-from utils import create_folder
-import time
 
 
 def get_smiles_string(best_molecules_dict: dict):
@@ -42,14 +40,13 @@ def get_csv(smiles: list, index: int):
     return path, csv
 
 
-def download(path, csv, folder_path):
+def download(path, csv, output_folder_path):
     content = requests.get(f"https://admetmesh.scbdd.com{path}").text
-    with open(f'{folder_path}/{csv}', 'w') as csv_file:
+    with open(f'{output_folder_path}/admet/{csv}', 'w') as csv_file:
         csv_file.write(content)
 
 
-def run_admet_request(best_molecules_dict):
-    folder_path = create_folder('admet')
+def run_admet_request(best_molecules_dict: dict, output_folder_path: str):
     smiles_strings, dict_smiles_list = get_smiles_string(best_molecules_dict)
 
     with ThreadPoolExecutor(max_workers=len(smiles_strings)) as executor:
@@ -58,15 +55,6 @@ def run_admet_request(best_molecules_dict):
             futures.append(executor.submit(get_csv, smiles_divided_group, index))
         for future in futures:
             path, csv = future.result()
-            download(path, csv, folder_path)
+            download(path, csv, output_folder_path)
 
-    return dict_smiles_list, folder_path
-
-
-if __name__ == '__main__':
-
-    start = time.time()
-    sms, listada = get_smiles_string(final_dict)
-    print(listada)
-    #run(final_dict)
-    print(time.time() - start)
+    return dict_smiles_list

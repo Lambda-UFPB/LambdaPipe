@@ -14,7 +14,7 @@ from json_handler import JsonHandler
 from sdf_processor import SdfProcessor
 from admet_request import run_admet_request
 from admet_analyzer import AdmetAnalyzer
-from utils import get_absolute_path, merge_csv
+from utils import generate_folder_name, create_folders, get_absolute_path, merge_csv
 import time
 
 
@@ -24,8 +24,12 @@ import time
 @click.option("--top", type=int, default=50, help="The number of the top molecules by score to search in admetlab 2.0")
 @click.option("--rmsd", type=float, default=7.0, help="RMSD threshold for filtering the results")
 @click.option("--pharma", is_flag=True, help="Prompt the user for additional input")
-@click.option("--output", type=click.Path(), help="Output file for the final results")
+@click.option("--output", type=click.Path(), help="Folder name containing the results")
 def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
+    folder_name = output if output else generate_folder_name()
+    output_folder_path = create_folders(folder_name)
+    admet_folder = f"{output_folder_path}/admet"
+
     phc = PharmitControl(get_absolute_path(receptor_file), get_absolute_path(ligand_file))
     phc.upload_complex()
     phc.get_json()
@@ -40,34 +44,23 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
                 break
             else:
                 jsh.pharma_switch(switch)
-
     modified_json_path = jsh.create_json()
+
     click.echo("Starting pharmit search...")
     minimize_count = phc.run_pharmit_search(modified_json_path)
+
     click.echo("Processing Results...")
     sdfp = SdfProcessor(minimize_count, top, rmsd)
     dict_final = sdfp.run_sdfprocessor()
+
     click.echo("Getting ADMET info...")
-    smiles_list, admet_folder = run_admet_request(dict_final)
+    smiles_list = run_admet_request(dict_final, output_folder_path)
     merge_csv(admet_folder)
+
     click.echo("Generating final results...")
-    analyzer = AdmetAnalyzer(f'{admet_folder}/merged.csv', admet_folder, dict_final, smiles_list)
-    analyzer.run_admet_analyzer(output)
-    click.echo("Go to the results folder to see the final results")
-
-
-"""
-def run_pharmit():
-    phc = PharmitControl()
-    minimize_count = phc.run_pharmit_control()
-    sdfp = SdfProcessor(minimize_count)
-    dict_final = sdfp.run_sdfprocessor(50)
-    smiles_list, admet_folder = run_admet_request(dict_final)
-    merge_csv(admet_folder)
-    analyzer = AdmetAnalyzer(f'{admet_folder}/merged.csv', admet_folder, dict_final, smiles_list)
+    analyzer = AdmetAnalyzer(output_folder_path, admet_folder, dict_final, smiles_list)
     analyzer.run_admet_analyzer()
-
-"""
+    click.echo(f"Go to the {folder_name} directory in files to see the final results")
 
 
 if __name__ == "__main__":

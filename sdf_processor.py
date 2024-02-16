@@ -17,23 +17,13 @@ class SdfProcessor:
     def _get_sdfs(self):
         """Get the .sdfs files from download page"""
         last_files = utils.get_last_files('minimized_results*', self.minimize_count)
+        print(last_files)
         if len(last_files) > self.minimize_count:
             n = len(last_files) - self.minimize_count
             last_files = last_files[:-n]
 
         for file in last_files:
             utils.transfer_to_folder(file, self.files_path, 'cp')
-            file_name = utils.get_file_name(file)
-            zipped_path = f"{self.files_path}/{file_name}"
-            unzipped_path = utils.unzip(zipped_path)
-            self.sdf_files.append(unzipped_path)
-
-        return last_files
-    
-    def _extract_sdf_files(self, last_files: list):
-        """Extracts the .sdf files from the .gz files"""
-        for file in last_files:
-            utils.transfer_to_folder(file, self.files_path, 'mv')
             file_name = utils.get_file_name(file)
             zipped_path = f"{self.files_path}/{file_name}"
             unzipped_path = utils.unzip(zipped_path)
@@ -76,8 +66,7 @@ class SdfProcessor:
         return {mol[0]: {'score': mol[1], 'rmsd': mol[2], 'smiles': mol[3]} for mol in self.best_molecules}
 
     def run_sdfprocessor(self):
-        last_files = self._get_sdfs()
-        self._extract_sdf_files(last_files)
+        self._get_sdfs()
         self._process_sdf()
         if self.best_molecules:
             
@@ -94,5 +83,5 @@ class SdfProcessor:
 
 if __name__ == '__main__':
     sdf = SdfProcessor(10, 50)
-    dict_final = sdf.run_sdfprocessor(50)
+    dict_final = sdf.run_sdfprocessor()
     print(dict_final)

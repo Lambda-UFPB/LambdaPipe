@@ -1,4 +1,6 @@
 import os
+import random
+import string
 import glob
 import gzip
 import pandas as pd
@@ -11,13 +13,21 @@ def transfer_to_folder(old_path: str, new_path: str, opt: str):
     os.system(cmd)
 
 
-def create_folder(folder_name: str):
-    folder_path = f"{os.getcwd()}/{folder_name}"
-    if not os.path.exists(folder_path):
-        cmd = f"mkdir {folder_path}"
-        os.system(cmd)
+def generate_folder_name():
+    letters_and_digits = string.ascii_letters + string.digits
 
-    return folder_path
+    return ''.join(random.choice(letters_and_digits) for _ in range(8))
+
+
+def create_folders(folder_name: str):
+    output_folder_path = f"{os.getcwd()}/files/{folder_name}"
+    if not os.path.exists(output_folder_path):
+        cmd = f"mkdir {output_folder_path}; mkdir {output_folder_path}/admet; mkdir {output_folder_path}/results"
+        os.system(cmd)
+    else:
+        raise FileExistsError(f"{output_folder_path} already exists")
+
+    return output_folder_path
 
 
 def get_file_name(path: str):
@@ -60,6 +70,7 @@ def get_last_files(file_pattern: str, minimize_count: int = None):
     cmd_1 = "xdg-user-dir DOWNLOAD"
     download_path = os.popen(cmd_1).read()
     download_path = download_path.replace("\n", "")
+    print(download_path)
     download_list = glob.glob(os.path.join(download_path, file_pattern))
     most_recent = ''
 
@@ -82,4 +93,6 @@ def get_last_files(file_pattern: str, minimize_count: int = None):
 
 if __name__ == '__main__':
     #a = get_last_files('minimized_results*', 10)
-    print(get_absolute_path('files/7KR1.pdbqt'))
+    nometeste = generate_folder_name()
+    out_path = create_folders(nometeste)
+    print(out_path)

@@ -1,12 +1,11 @@
 import pandas as pd
-from utils import create_folder
 
 
 class AdmetAnalyzer:
-    def __init__(self, csv_path: str, admet_path: str, best_molecules_dict: dict, dict_smiles_list: list):
+    def __init__(self, output_folder_path: str, admet_path: str, best_molecules_dict: dict, dict_smiles_list: list):
+        csv_path = f'{admet_path}/merged.csv'
         self.admet_df = pd.read_csv(csv_path)
         self.admet_path = admet_path
-        self.results_path = create_folder('results')
         self.best_molecules_dict = best_molecules_dict
         self.dict_smiles_list = dict_smiles_list
         self.admet_df['smiles'] = self.dict_smiles_list
@@ -64,7 +63,7 @@ class AdmetAnalyzer:
             if low < parameter_value <= high:
                 return category
 
-    def run_admet_analyzer(self, output_name: str):
+    def run_admet_analyzer(self):
         self._filter_toxicity()
         self._filter_conditions()
         self._get_molecule_id()
@@ -73,6 +72,4 @@ class AdmetAnalyzer:
         for column in category_df.columns:
             self.admet_df[column] = self.admet_df[column].astype(object)
         self.admet_df.update(category_df)
-        if not output_name:
-            output_name = 'admet_filtered'
-        self.admet_df.to_csv(f'{self.results_path}/{output_name}.csv', index=False)
+        self.admet_df.to_csv(f'{self.results_path}/admet_filtered.csv', index=False)
