@@ -3,6 +3,7 @@ import glob
 import gzip
 import pandas as pd
 import re
+import time
 
 
 def transfer_to_folder(old_path: str, new_path: str, opt: str):
@@ -51,6 +52,10 @@ def unzip(zipped_path):
     return unzipped_path
 
 
+def get_absolute_path(path: str):
+    return os.path.abspath(path)
+
+
 def get_last_files(file_pattern: str, minimize_count: int = None):
     cmd_1 = "xdg-user-dir DOWNLOAD"
     download_path = os.popen(cmd_1).read()
@@ -62,7 +67,11 @@ def get_last_files(file_pattern: str, minimize_count: int = None):
     
     if file_pattern == 'pharmit*.json':
         while True:
-            most_recent = download_list[0]
+            try:
+                most_recent = download_list[0]
+            except IndexError:
+                time.sleep(2)
+                continue
             if 'crdownload' not in most_recent:
                 break
     if minimize_count:
@@ -73,6 +82,4 @@ def get_last_files(file_pattern: str, minimize_count: int = None):
 
 if __name__ == '__main__':
     #a = get_last_files('minimized_results*', 10)
-    merge_csv('/home/kdunorat/PycharmProjects/LambdaPipe/admet')
-    #print(get_chrome_binary_path())
-    pass
+    print(get_absolute_path('files/7KR1.pdbqt'))

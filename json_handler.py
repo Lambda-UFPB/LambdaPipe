@@ -4,11 +4,15 @@ import utils
 
 
 class JsonHandler:
-    def __init__(self):
-        self.session = self._load_json()
+
+    def __init__(self, pharmit_json=None):
+        if pharmit_json:
+            self.session = pharmit_json
+        else:
+            self.session = self.load_json()
 
     @staticmethod
-    def _load_json():
+    def load_json():
         download_path = utils.get_last_files('pharmit*.json')
         files_path = f"{os.getcwd()}/files"
         session_file = utils.get_file_name(download_path)
@@ -19,19 +23,19 @@ class JsonHandler:
 
         return session
 
-    def _pharma_switch(self):
+    def pharma_switch(self, switch_number: int):
         # Tá desligada
-        for switch in self.session["points"][4:19]:
-            switch["enabled"] = False
+        button = self.session["points"][switch_number-1]
+        button["enabled"] = not button["enabled"]
 
     def create_json(self):
-        # self._pharma_switch()
-        modified_json_path = f"{os.getcwd()}/files/file_1.json"
+        modified_json_path = f"{os.getcwd()}/files/new_session.json"
         with open(modified_json_path, 'w') as file:
             json.dump(self.session, file)
         return modified_json_path
 
 
 if __name__ == '__main__':
-    jsh = JsonHandler()
-    jsh.create_json()
+    #phc = PharmitControl()
+    #jsh = JsonHandler()
+    pass

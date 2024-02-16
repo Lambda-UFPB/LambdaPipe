@@ -6,7 +6,6 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from json_handler import JsonHandler
 import time
 import utils
 
@@ -49,19 +48,23 @@ class PharmitControl:
         self.driver.switch_to.window(tab)
         self.driver.close()
 
-    def _upload_complex(self):
+    def upload_complex(self):
         # Get page
         self.driver.get("https://pharmit.csb.pitt.edu/search.html")
         self.driver.implicitly_wait(3)
-        # Upload receptor
-        receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
-        receptor.send_keys(self.receptor_path)
-        time.sleep(3)
-        # Upload ligand
-        ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
-        ligand.send_keys(self.ligand_path)
+        # MODIFICAR ISSO AQUI
+        try:
+            # Upload receptor
+            receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
+            receptor.send_keys(self.receptor_path)
+            time.sleep(3)
+            # Upload ligand
+            ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
+            ligand.send_keys(self.ligand_path)
+        except WebDriverException:
+            print("Error uploading files. Please check the paths and try again.")
 
-    def _get_json(self):
+    def get_json(self):
         # Download first json
         time.sleep(3)
         self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/button').click()
@@ -74,11 +77,18 @@ class PharmitControl:
         self.driver.execute_script("arguments[0].setAttribute('value', arguments[1]);", database, db)
 
     @staticmethod
-    def _create_json():
-        time.sleep(3)
-        jsh = JsonHandler()
-        modified_json_path = jsh.create_json()
-        return modified_json_path
+    def show_pharmacophore_menu(pharmit_json):
+        pharma_string = ""
+        for index, pharmacophore in enumerate(pharmit_json["points"]):
+            pharma_name = pharmacophore["name"]
+            if pharma_name == "InclusionSphere":
+                continue
+            pharma_coord = f"{pharmacophore['x']}, {pharmacophore['y']}, {pharmacophore['z']}"
+            pharma_status = pharmacophore["enabled"]
+            pharma_switch = "[on]" if pharma_status else "[off]"
+            pharma_string += f"[{index + 1}]{pharma_switch}---{pharma_name}({pharma_coord})\n"
+
+        return pharma_string
 
     def _upload_json(self, count, db, modified_json_path):
         if count <= 4:
@@ -137,10 +147,7 @@ class PharmitControl:
                 break
             time.sleep(1)
 
-    def run_pharmit_control(self):
-        self._upload_complex()
-        self._get_json()
-        modified_json_path = PharmitControl._create_json()
+    def run_pharmit_search(self, modified_json_path):
         for count, db in enumerate(self.db_tuple):
             self._open_tab(count, db)
             self._upload_json(count, db, modified_json_path)

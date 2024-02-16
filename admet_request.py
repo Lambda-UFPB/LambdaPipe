@@ -51,7 +51,6 @@ def download(path, csv, folder_path):
 def run_admet_request(best_molecules_dict):
     folder_path = create_folder('admet')
     smiles_strings, dict_smiles_list = get_smiles_string(best_molecules_dict)
-    print('Searching ADMETLAB 2.0........\n')
 
     with ThreadPoolExecutor(max_workers=len(smiles_strings)) as executor:
         futures = []
@@ -62,7 +61,7 @@ def run_admet_request(best_molecules_dict):
             download(path, csv, folder_path)
 
     return dict_smiles_list, folder_path
-    
+
 
 if __name__ == '__main__':
 
