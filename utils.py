@@ -6,6 +6,7 @@ import gzip
 import pandas as pd
 import re
 import time
+from exceptions import InvalidInputError
 
 
 def get_absolute_path(path: str):
@@ -14,12 +15,17 @@ def get_absolute_path(path: str):
 
 def create_stats_file(output_folder_path: str):
     with open(f'{output_folder_path}/results/search-stats.txt', 'w') as stats:
-       stats.write('Search Log\n\n')
+        stats.write('Search Log\n\n')
 
 
 def transfer_to_folder(old_path: str, new_path: str, opt: str):
     cmd = f"{opt} '{old_path}' {new_path}"
     os.system(cmd)
+
+
+def check_session(session: dict):
+    if not session["ligand"] or not session["points"]:
+        raise InvalidInputError("You must provide a valid receptor and ligand in the correct order")
 
 
 def generate_folder_name():
@@ -74,13 +80,12 @@ def get_last_files(file_pattern: str, minimize_count: int = None):
     cmd_1 = "xdg-user-dir DOWNLOAD"
     download_path = os.popen(cmd_1).read()
     download_path = download_path.replace("\n", "")
-    print(download_path)
     download_list = glob.glob(os.path.join(download_path, file_pattern))
     most_recent = ''
 
     download_list.sort(key=os.path.getmtime, reverse=True)
-    
-    if file_pattern == 'pharmit*.json':
+
+    if file_pattern == 'pharmit*.json*':
         while True:
             try:
                 most_recent = download_list[0]
@@ -91,12 +96,9 @@ def get_last_files(file_pattern: str, minimize_count: int = None):
                 break
     if minimize_count:
         most_recent = download_list[:minimize_count]
-    
-    return most_recent
+    return most_recent, download_list
      
 
 if __name__ == '__main__':
-    #a = get_last_files('minimized_results*', 10)
-    nometeste = generate_folder_name()
-    out_path = create_folders(nometeste)
-    print(out_path)
+    download_path = get_last_files('pharmit*.json*')
+    print(download_path)

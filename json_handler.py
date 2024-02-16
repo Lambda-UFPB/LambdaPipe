@@ -5,31 +5,32 @@ import utils
 
 class JsonHandler:
 
-    def __init__(self, pharmit_json=None):
+    def __init__(self, output_file_path, pharmit_json=None):
+        self.output_file_path = output_file_path
         if pharmit_json:
             self.session = pharmit_json
         else:
             self.session = self.load_json()
 
-    @staticmethod
-    def load_json():
-        download_path = utils.get_last_files('pharmit*.json')
-        files_path = f"{os.getcwd()}/files"
-        session_file = utils.get_file_name(download_path)
-        utils.transfer_to_folder(download_path, files_path,  'cp')
+    def load_json(self):
+        session_download_path, dlist = utils.get_last_files('pharmit*.json*')
+        print(session_download_path)
+        print(dlist)
+        session_file = utils.get_file_name(session_download_path)
+        utils.transfer_to_folder(session_download_path, self.output_file_path,  'cp')
 
-        with open(f"{files_path}/{session_file}", 'r') as file:
+        with open(f"{self.output_file_path}/{session_file}", 'r') as file:
             session = json.load(file)
 
+        utils.check_session(session)
         return session
 
     def pharma_switch(self, switch_number: int):
-        # Tá desligada
         button = self.session["points"][switch_number-1]
         button["enabled"] = not button["enabled"]
 
     def create_json(self):
-        modified_json_path = f"{os.getcwd()}/files/new_session.json"
+        modified_json_path = f"{self.output_file_path}/new_session.json"
         with open(modified_json_path, 'w') as file:
             json.dump(self.session, file)
         return modified_json_path

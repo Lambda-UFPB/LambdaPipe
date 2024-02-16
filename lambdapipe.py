@@ -34,7 +34,8 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
     phc = PharmitControl(get_absolute_path(receptor_file), get_absolute_path(ligand_file), output_folder_path)
     phc.upload_complex()
     phc.get_json()
-    jsh = JsonHandler()
+    time.sleep(5)
+    jsh = JsonHandler(output_folder_path)
     if pharma:
         while True:
             click.echo(phc.show_pharmacophore_menu(jsh.session))
