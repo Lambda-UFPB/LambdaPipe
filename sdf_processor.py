@@ -16,7 +16,7 @@ class SdfProcessor:
 
     def _get_sdfs(self):
         """Get the .sdfs files from download page"""
-        last_files = utils.get_last_files('minimized_results*', self.minimize_count)
+        last_files = utils.get_last_files(file_pattern='minimized_results*', minimize_count=self.minimize_count)
         print(last_files)
         if len(last_files) > self.minimize_count:
             n = len(last_files) - self.minimize_count

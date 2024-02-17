@@ -76,17 +76,20 @@ def unzip(zipped_path):
     return unzipped_path
 
 
-def get_last_files(file_pattern: str, minimize_count: int = None):
+def get_download_list(file_pattern: str):
     cmd_1 = "xdg-user-dir DOWNLOAD"
-    download_path = os.popen(cmd_1).read()
-    download_path = download_path.replace("\n", "")
-    download_list = glob.glob(os.path.join(download_path, file_pattern))
+    download_directory_path = os.popen(cmd_1).read()
+    download_directory_path = download_directory_path.replace("\n", "")
+    download_list = glob.glob(os.path.join(download_directory_path, file_pattern))
+    return download_list
+
+
+def get_last_files(file_pattern: str, old_download_list: list = None, minimize_count: int = None):
     most_recent = ''
-
-    download_list.sort(key=os.path.getmtime, reverse=True)
-
-    if file_pattern == 'pharmit*.json*':
-        while True:
+    while True:
+        download_list = get_download_list(file_pattern)
+        download_list.sort(key=os.path.getmtime, reverse=True)
+        if len(download_list) > len(old_download_list) and file_pattern == 'pharmit*.json*':
             try:
                 most_recent = download_list[0]
             except IndexError:
@@ -94,9 +97,13 @@ def get_last_files(file_pattern: str, minimize_count: int = None):
                 continue
             if 'crdownload' not in most_recent:
                 break
-    if minimize_count:
-        most_recent = download_list[:minimize_count]
-    return most_recent, download_list
+            else:
+                time.sleep(2)
+        elif minimize_count:
+            most_recent = download_list[:minimize_count]
+            break
+
+    return most_recent
      
 
 if __name__ == '__main__':

@@ -14,7 +14,8 @@ from json_handler import JsonHandler
 from sdf_processor import SdfProcessor
 from admet_request import run_admet_request
 from admet_analyzer import AdmetAnalyzer
-from utils import generate_folder_name, create_folders, create_stats_file, get_absolute_path, merge_csv
+from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list, get_absolute_path,
+                   merge_csv)
 import time
 
 
@@ -30,12 +31,13 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
     output_folder_path = create_folders(folder_name)
     create_stats_file(output_folder_path)
     admet_folder = f"{output_folder_path}/admet"
+    old_download_list = get_download_list('pharmit*.json*')
 
     phc = PharmitControl(get_absolute_path(receptor_file), get_absolute_path(ligand_file), output_folder_path)
     phc.upload_complex()
     phc.get_json()
-    time.sleep(5)
-    jsh = JsonHandler(output_folder_path)
+    jsh = JsonHandler(output_folder_path, old_download_list)
+
     if pharma:
         while True:
             click.echo(phc.show_pharmacophore_menu(jsh.session))

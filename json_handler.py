@@ -5,15 +5,17 @@ import utils
 
 class JsonHandler:
 
-    def __init__(self, output_file_path, pharmit_json=None):
+    def __init__(self, output_file_path, old_download_list, pharmit_json=None):
         self.output_file_path = output_file_path
+        self.old_download_list = old_download_list
         if pharmit_json:
             self.session = pharmit_json
         else:
             self.session = self.load_json()
 
     def load_json(self):
-        session_download_path, dlist = utils.get_last_files('pharmit*.json*')
+        session_download_path = utils.get_last_files(file_pattern='pharmit*.json*',
+                                                     old_download_list=self.old_download_list)
         session_file = utils.get_file_name(session_download_path)
         utils.transfer_to_folder(session_download_path, self.output_file_path,  'cp')
 
