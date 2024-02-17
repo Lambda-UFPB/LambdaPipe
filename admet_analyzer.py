@@ -6,6 +6,7 @@ class AdmetAnalyzer:
         csv_path = f'{admet_path}/merged.csv'
         self.admet_df = pd.read_csv(csv_path)
         self.admet_path = admet_path
+        self.results_path = f"{output_folder_path}/results"
         self.best_molecules_dict = best_molecules_dict
         self.dict_smiles_list = dict_smiles_list
         self.admet_df['smiles'] = self.dict_smiles_list
@@ -63,6 +64,11 @@ class AdmetAnalyzer:
             if low < parameter_value <= high:
                 return category
 
+    def _write_admet_filtered_stats(self):
+        num_rows = self.admet_df.shape[0]
+        with open(f'{self.results_path}/search-stats.txt', 'a') as stats:
+            stats.write(f'Molecules after ADMET filter: {num_rows}\n')
+
     def run_admet_analyzer(self):
         self._filter_toxicity()
         self._filter_conditions()
@@ -72,4 +78,5 @@ class AdmetAnalyzer:
         for column in category_df.columns:
             self.admet_df[column] = self.admet_df[column].astype(object)
         self.admet_df.update(category_df)
+        self._write_admet_filtered_stats()
         self.admet_df.to_csv(f'{self.results_path}/admet_filtered.csv', index=False)

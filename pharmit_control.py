@@ -20,7 +20,6 @@ class PharmitControl:
         options.add_experimental_option('detach', True)
         self.db_tuple = ('chembl', 'chemdiv', 'enamine', 'molport', 'mcule', 'ultimate', 'nsc', 'pubchem', 'wuxi-lab',
                          'zinc')
-        self.proceed = False
         chrome_options = Options()
         possible_chrome_binary_locations = utils.get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -122,15 +121,17 @@ class PharmitControl:
                     pass
 
                 if minimize_button.is_enabled():
+                    time.sleep(1)
                     number_of_hits = self._get_screening_stats()
                     self._write_screening_stats(number_of_hits, self.db_tuple[n])
-                    self.proceed = True
+                    minimize_button.click()
+                    try:
+                        self.driver.switch_to.alert.dismiss()
+                    except NoAlertPresentException:
+                        pass
                     break
                 else:
                     time.sleep(1)
-            if self.proceed:
-                self.proceed = False
-                self._download(minimize_button)
 
     def _get_screening_stats(self):
         element = self.driver.find_element(By.ID, "DataTables_Table_0_info")
@@ -155,23 +156,26 @@ class PharmitControl:
             with open(f"{self.output_folder_path}/results/search-stats.txt", "a") as stats:
                 stats.write(f"Total hits: {self.total_hits}\n")
 
-    def _download(self, minimize_button):
-        # Minimize
-        time.sleep(3)
-        minimize_button.click()
-        try:
-            self.driver.switch_to.alert.dismiss()
-        except NoAlertPresentException:
-            pass
-        save_button = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[3]/div[3]/div[2]/button')
-        # Saving
+    def _download_loop(self, count):
+        proceed = False
+        downloaded_dbs = []
         while True:
-            if save_button.is_enabled():
-                time.sleep(1)
-                save_button.click()
-                self.minimize_count += 1
+            if proceed:
                 break
-            time.sleep(1)
+            for n in range(count - count, 5):
+                if self.minimize_count == 5 or self.minimize_count == 10:
+                    proceed = True
+                    break
+                if n in downloaded_dbs:
+                    continue
+                self.driver.switch_to.window(f"{self.db_tuple[n]}")
+                time.sleep(5)
+                save_button = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[3]/div[3]/div[2]/button')
+                if save_button.is_enabled():
+                    time.sleep(1)
+                    save_button.click()
+                    self.minimize_count += 1
+                    downloaded_dbs.append(n)
 
     def run_pharmit_search(self, modified_json_path):
         for count, db in enumerate(self.db_tuple):
@@ -181,6 +185,7 @@ class PharmitControl:
             self._search()
             if count == 4 or count == 9:
                 self._search_loop(count)
+                self._download_loop(count)
         time.sleep(5)
         self.driver.quit()
         return self.minimize_count
