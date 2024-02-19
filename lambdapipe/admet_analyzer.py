@@ -1,5 +1,4 @@
-import pandas as pd
-import utils as utils
+from .utils import *
 
 
 class AdmetAnalyzer:
@@ -82,7 +81,7 @@ class AdmetAnalyzer:
         self.admet_df.update(category_df)
         best_score = self.admet_df['Score'].min()
         num_molecules = self.admet_df.shape[0]
-        utils.write_stats(f"\nNumber of molecules after admet filter: {num_molecules}\n"
-                          f"Best score after admet research: {best_score}", self.output_folder_path)
+        write_stats(f"\nNumber of molecules after admet filter: {num_molecules}\n"
+                    f"Best score after admet research: {best_score}", self.output_folder_path)
 
         self.admet_df.to_csv(f'{self.results_path}/admet_filtered.csv', index=False)

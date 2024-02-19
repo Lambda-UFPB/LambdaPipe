@@ -1,5 +1,5 @@
 import json
-import utils as utils
+from .utils import *
 
 
 class JsonHandler:
@@ -26,15 +26,15 @@ class JsonHandler:
         return pharma_string
 
     def load_json(self):
-        session_download_path = utils.get_last_files(file_pattern='pharmit*.json*',
-                                                     old_download_list=self.old_download_list)
-        session_file = utils.get_file_name(session_download_path)
-        utils.transfer_to_folder(session_download_path, self.output_file_path, 'cp')
+        session_download_path = get_last_files(file_pattern='pharmit*.json*',
+                                               old_download_list=self.old_download_list)
+        session_file = get_file_name(session_download_path)
+        transfer_to_folder(session_download_path, self.output_file_path, 'cp')
 
         with open(f"{self.output_file_path}/{session_file}", 'r') as file:
             session = json.load(file)
 
-        utils.check_session(session)
+        check_session(session)
         return session
 
     def pharma_switch(self, switch_number: int):
@@ -46,9 +46,3 @@ class JsonHandler:
         with open(modified_json_path, 'w') as file:
             json.dump(self.session, file)
         return modified_json_path
-
-
-if __name__ == '__main__':
-    #phc = PharmitControl()
-    #jsh = JsonHandler()
-    pass

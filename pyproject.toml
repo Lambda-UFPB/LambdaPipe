@@ -6,7 +6,7 @@ authors = ["kdunorat <kdu.norat@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.scripts]
-lambdapipe = 'lambdapipe:lambdapipe'
+lambdapipe = 'lambdapipe.lambdapipe:lambdapipe'
 
 [tool.poetry.dependencies]
 python = "^3.10"

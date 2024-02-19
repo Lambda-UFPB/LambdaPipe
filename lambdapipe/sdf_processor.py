@@ -1,4 +1,4 @@
-import utils as utils
+from utils import *
 from rdkit import RDLogger, Chem
 
 
@@ -18,16 +18,16 @@ class SdfProcessor:
 
     def _get_sdfs(self):
         """Get the .sdfs files from download page"""
-        last_files = utils.get_last_files(file_pattern='minimized_results*', minimize_count=self.minimize_count)
+        last_files = get_last_files(file_pattern='minimized_results*', minimize_count=self.minimize_count)
         if len(last_files) > self.minimize_count:
             n = len(last_files) - self.minimize_count
             last_files = last_files[:-n]
 
         for file in last_files:
-            utils.transfer_to_folder(file, self.output_folder_path, 'cp')
-            file_name = utils.get_file_name(file)
+            transfer_to_folder(file, self.output_folder_path, 'cp')
+            file_name = get_file_name(file)
             zipped_path = f"{self.output_folder_path}/{file_name}"
-            unzipped_path = utils.unzip(zipped_path)
+            unzipped_path = unzip(zipped_path)
             self.sdf_files.append(unzipped_path)
 
     def _process_sdf(self):
@@ -70,7 +70,7 @@ class SdfProcessor:
         self._get_sdfs()
         self._process_sdf()
         if self.best_molecules:
-            utils.write_stats(f"\nNumber of molecules after filtering (Score < -11 and RMSD < {self.cli_rmsd}): "
+            write_stats(f"\nNumber of molecules after filtering (Score < -11 and RMSD < {self.cli_rmsd}): "
                               f"{len(self.best_molecules)}", self.output_folder_path)
             if len(self.best_molecules) > self.top:
                 self._get_top_molecules(self.top)
@@ -78,7 +78,7 @@ class SdfProcessor:
             else:
                 raise ValueError(f'No sufficient molecules ({len(self.best_molecules)}) to fit '
                                  f'the minimum number of molecules: {self.top}')
-            utils.write_stats(f"\nBest score before admet research: {self.best_molecules[0]}", self.output_folder_path)
+            write_stats(f"\nBest score before admet research: {self.best_molecules[0]}", self.output_folder_path)
         else:
             raise ValueError('No molecules that fit the threshold found in the .sdf files')
         

@@ -7,9 +7,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import TimeoutException
-import re
-import time
-import utils as utils
+from .utils import *
 
 
 class PharmitControl:
@@ -24,7 +22,7 @@ class PharmitControl:
         self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
                         ['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
         chrome_options = Options()
-        possible_chrome_binary_locations = utils.get_chrome_binary_path()
+        possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
             try:
                 chrome_options.binary_location = chrome_location
@@ -110,20 +108,10 @@ class PharmitControl:
                                                            '//*[@id="pharmit"]/div[1]/div[4]/div[3]/div/button[1]')
                 if self._check_no_results(db):
                     self.db_list[run].remove(db)
-                # if search_count == 4:
-                    # self._waiting_last_db(db, minimize_button)
                 if minimize_button.is_enabled():
                     self._minimize(minimize_button, db)
                     search_count += 1
                     searched_dbs.append(db)
-
-    def _waiting_last_db(self, minimize_button):
-        while True:
-            try:
-                WebDriverWait(self.driver, 10).until(ec.element_to_be_clickable(minimize_button))
-                break
-            except TimeoutException:
-                pass
 
     def _check_no_results(self, db):
         try:
@@ -136,7 +124,7 @@ class PharmitControl:
 
     def _minimize(self, minimize_button, db):
         number_of_hits = self._get_screening_stats()
-        utils.write_stats(f"\n{db}: {number_of_hits}", self.output_folder_path)
+        write_stats(f"\n{db}: {number_of_hits}", self.output_folder_path)
         while True:
             try:
                 minimize_button.click()
@@ -198,7 +186,7 @@ class PharmitControl:
     @staticmethod
     def check_finished_download(counter, old_download_list):
         while True:
-            new_download_list = utils.get_download_list('minimized_results*')
+            new_download_list = get_download_list('minimized_results*')
             all_downloads = len(new_download_list) - len(old_download_list)
             if all_downloads >= counter:
                 break
@@ -207,7 +195,7 @@ class PharmitControl:
         return True
 
     def run_pharmit_search(self, modified_json_path):
-        old_download_list = utils.get_download_list('minimized_results*')
+        old_download_list = get_download_list('minimized_results*')
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
                 if run == 0:
@@ -220,6 +208,6 @@ class PharmitControl:
 
         if PharmitControl.check_finished_download(self.minimize_count, old_download_list):
             self.driver.quit()
-            utils.write_stats(f"\nTotal hits: {self.total_hits}", self.output_folder_path)
+            write_stats(f"\nTotal hits: {self.total_hits}", self.output_folder_path)
 
             return self.minimize_count

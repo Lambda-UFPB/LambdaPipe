@@ -9,20 +9,21 @@ Email: kdu.norat@gmail.com
 """
 
 import click
-from pharmit_control import PharmitControl
-from json_handler import JsonHandler
-from sdf_processor import SdfProcessor
-from admet_request import run_admet_request
-from admet_analyzer import AdmetAnalyzer
-from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list, get_absolute_path,
-                   merge_csv)
+from lambdapipe.pharmit_control import PharmitControl
+from lambdapipe.json_handler import JsonHandler
+from lambdapipe.sdf_processor import SdfProcessor
+from lambdapipe.admet_request import run_admet_request
+from lambdapipe.admet_analyzer import AdmetAnalyzer
+from lambdapipe.utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
+                              get_absolute_path, merge_csv)
 import time
 
 
 @click.command()
 @click.argument("receptor_file", type=click.Path(exists=True), required=True)
 @click.argument("ligand_file", type=click.Path(exists=True), required=True)
-@click.option("-t", "--top", type=int, default=50, help="The number of the top molecules by score to search in admetlab 2.0")
+@click.option("-t", "--top", type=int, default=50,
+              help="The number of the top molecules by score to search in admetlab 2.0")
 @click.option("-r", "--rmsd", type=float, default=7.0, help="RMSD threshold for filtering the results")
 @click.option("-p", "--pharma", is_flag=True, help="Prompt the user for additional input")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
@@ -66,7 +67,7 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
     analyzer.run_admet_analyzer()
     click.echo(f"\nGo to the {folder_name} directory in files to see the final results")
     elapsed_time = time.time()
-    click.echo(f"Total time: {elapsed_time - start_time}")
+    click.echo(f"Analysis Completed\n{(elapsed_time - start_time)/60:.2f} minutes")
 
 
 if __name__ == "__main__":
