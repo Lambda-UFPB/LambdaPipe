@@ -200,7 +200,6 @@ class PharmitControl:
         while True:
             new_download_list = utils.get_download_list('minimized_results*')
             all_downloads = len(new_download_list) - len(old_download_list)
-            print(all_downloads)
             if all_downloads >= counter:
                 break
             else:

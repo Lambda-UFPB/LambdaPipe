@@ -51,6 +51,11 @@ class AdmetAnalyzer:
         self.admet_df = self.admet_df[cols]
 
     @staticmethod
+    def _write_best_molecule_after(self):
+        best_molecules_df = pd.DataFrame(self.best_molecules_dict).T
+        best_molecules_df.to_csv(f'{self.results_path}/best_molecules.csv', index=True)
+
+    @staticmethod
     def _generate_category_df(parameter_value):
         categories = {
             (0.0, 0.1): '---',
@@ -66,11 +71,6 @@ class AdmetAnalyzer:
             if low < parameter_value <= high:
                 return category
 
-    def _write_admet_filtered_stats(self):
-        num_rows = self.admet_df.shape[0]
-        with open(f'{self.results_path}/search-stats.txt', 'a') as stats:
-            stats.write(f'Molecules after ADMET filter: {num_rows}\n')
-
     def run_admet_analyzer(self):
         self._filter_toxicity()
         self._filter_conditions()
@@ -80,7 +80,6 @@ class AdmetAnalyzer:
         for column in category_df.columns:
             self.admet_df[column] = self.admet_df[column].astype(object)
         self.admet_df.update(category_df)
-        self._write_admet_filtered_stats()
         best_score = self.admet_df['Score'].min()
         num_molecules = self.admet_df.shape[0]
         utils.write_stats(f"\nNumber of molecules after admet filter: {num_molecules}\n"
