@@ -48,12 +48,15 @@ def create_folders(folder_name: str):
     main_directory_path = os.path.expanduser(f"~/lambdapipe_results")
     if not os.path.exists(main_directory_path):
         os.makedirs(main_directory_path, exist_ok=True)
-    output_folder_path = os.path.expanduser(f"~/{main_directory_path}/{folder_name}")
-    if not os.path.exists(output_folder_path):
-        cmd = f"mkdir {output_folder_path}; mkdir {output_folder_path}/admet; mkdir {output_folder_path}/results"
-        os.system(cmd)
-    else:
-        raise FileExistsError(f"{output_folder_path} already exists")
+    output_folder_path = os.path.join(main_directory_path, folder_name)
+    admet_folder_path = os.path.join(output_folder_path, "admet")
+    results_folder_path = os.path.join(output_folder_path, "results")
+    for path in [output_folder_path, admet_folder_path, results_folder_path]:
+        if not os.path.exists(path):
+            os.makedirs(path, exist_ok=True)
+
+        else:
+            raise FileExistsError(f"{output_folder_path} already exists")
 
     return output_folder_path
 
