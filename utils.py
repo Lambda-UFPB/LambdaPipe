@@ -6,7 +6,7 @@ import gzip
 import pandas as pd
 import re
 import time
-from src.exceptions import InvalidInputError
+from exceptions import InvalidInputError
 
 
 def get_absolute_path(path: str):

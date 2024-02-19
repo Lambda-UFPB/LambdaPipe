@@ -9,7 +9,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import TimeoutException
 import re
 import time
-import src.utils as utils
+import utils as utils
 
 
 class PharmitControl:

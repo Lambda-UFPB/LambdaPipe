@@ -1,5 +1,5 @@
 import json
-import src.utils as utils
+import utils as utils
 
 
 class JsonHandler:
