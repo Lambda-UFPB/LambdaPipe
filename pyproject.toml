@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "lambdapipe"
+version = "0.1.0"
+description = "Pipeline for LAMBDA-UFPB"
+authors = ["kdunorat <kdu.norat@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+selenium = "^4.17.2"
+webdriver-manager = "^4.0.1"
+beautifulsoup4 = "^4.12.3"
+rdkit = "^2023.9.4"
+pandas = "^2.2.0"
+pyarrow = "^15.0.0"
+click = "^8.1.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

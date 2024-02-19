@@ -6,7 +6,7 @@ import gzip
 import pandas as pd
 import re
 import time
-from exceptions import InvalidInputError
+from src.exceptions import InvalidInputError
 
 
 def get_absolute_path(path: str):
@@ -95,17 +95,16 @@ def get_last_files(file_pattern: str, old_download_list: list = None, minimize_c
         old_download_list = []
     while True:
         download_list = get_download_list(file_pattern)
+        # Filter out files that are still being downloaded or do not exist
+        download_list = [f for f in download_list if os.path.isfile(f) and not f.endswith('.crdownload')]
         download_list.sort(key=os.path.getmtime, reverse=True)
         if len(download_list) > len(old_download_list) and file_pattern == 'pharmit*.json*':
             try:
                 most_recent = download_list[0]
             except IndexError:
-                time.sleep(2)
+                time.sleep(1)
                 continue
-            if 'crdownload' not in most_recent:
-                break
-            else:
-                time.sleep(2)
+            break
         elif minimize_count:
             most_recent = download_list[:minimize_count]
             break

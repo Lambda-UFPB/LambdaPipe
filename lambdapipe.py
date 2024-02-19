@@ -9,13 +9,13 @@ Email: kdu.norat@gmail.com
 """
 
 import click
-from pharmit_control import PharmitControl
-from json_handler import JsonHandler
-from sdf_processor import SdfProcessor
-from admet_request import run_admet_request
-from admet_analyzer import AdmetAnalyzer
-from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list, get_absolute_path,
-                   merge_csv)
+from src.pharmit_control import PharmitControl
+from src.json_handler import JsonHandler
+from src.sdf_processor import SdfProcessor
+from src.admet_request import run_admet_request
+from src.admet_analyzer import AdmetAnalyzer
+from src.utils import (generate_folder_name, create_folders, create_stats_file, get_download_list, get_absolute_path,
+                       merge_csv)
 import time
 
 

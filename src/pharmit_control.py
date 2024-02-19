@@ -9,7 +9,7 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import TimeoutException
 import re
 import time
-import utils
+import src.utils as utils
 
 
 class PharmitControl:
@@ -100,7 +100,6 @@ class PharmitControl:
         search_count = 0
         searched_dbs = []
         while True:
-            print(f"Search count: {search_count}")
             if search_count == 5:
                 break
             for n, db in enumerate(db_half):
@@ -136,7 +135,6 @@ class PharmitControl:
             return False
 
     def _minimize(self, minimize_button, db):
-        print(f"Minimizing {db}")
         number_of_hits = self._get_screening_stats()
         utils.write_stats(f"\n{db}: {number_of_hits}", self.output_folder_path)
         while True:
@@ -202,11 +200,12 @@ class PharmitControl:
         while True:
             new_download_list = utils.get_download_list('minimized_results*')
             all_downloads = len(new_download_list) - len(old_download_list)
-            if all_downloads == counter:
+            print(all_downloads)
+            if all_downloads >= counter:
                 break
             else:
                 time.sleep(2)
-        return
+        return True
 
     def run_pharmit_search(self, modified_json_path):
         old_download_list = utils.get_download_list('minimized_results*')

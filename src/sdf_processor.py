@@ -1,5 +1,4 @@
-import utils
-import os
+import src.utils as utils
 from rdkit import RDLogger, Chem
 
 
@@ -20,7 +19,6 @@ class SdfProcessor:
     def _get_sdfs(self):
         """Get the .sdfs files from download page"""
         last_files = utils.get_last_files(file_pattern='minimized_results*', minimize_count=self.minimize_count)
-        print(last_files)
         if len(last_files) > self.minimize_count:
             n = len(last_files) - self.minimize_count
             last_files = last_files[:-n]
@@ -88,6 +86,6 @@ class SdfProcessor:
 
 
 if __name__ == '__main__':
-    sdf = SdfProcessor(10, 50, )
+    sdf = SdfProcessor(10, 50, "/home/kdunorat/PycharmProjects/LambdaPipe/files/testedefinitivo")
     dict_final = sdf.run_sdfprocessor()
     print(dict_final)

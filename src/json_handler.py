@@ -1,6 +1,5 @@
 import json
-import os
-import utils
+import src.utils as utils
 
 
 class JsonHandler:
@@ -30,7 +29,7 @@ class JsonHandler:
         session_download_path = utils.get_last_files(file_pattern='pharmit*.json*',
                                                      old_download_list=self.old_download_list)
         session_file = utils.get_file_name(session_download_path)
-        utils.transfer_to_folder(session_download_path, self.output_file_path,  'cp')
+        utils.transfer_to_folder(session_download_path, self.output_file_path, 'cp')
 
         with open(f"{self.output_file_path}/{session_file}", 'r') as file:
             session = json.load(file)
