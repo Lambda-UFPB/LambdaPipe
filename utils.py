@@ -67,6 +67,11 @@ def get_chrome_binary_path():
     return [possible_path_1.replace("\n", ""), possible_path_2.replace("\n", "")]
 
 
+def write_screening_stats(number_of_hits: int, db: str, output_folder_path: str):
+    with open(f"{output_folder_path}/results/search-stats.txt", "a") as stats:
+        stats.write(f"{db}: {number_of_hits} hits\n")
+
+
 def unzip(zipped_path):
     unzipped_path = zipped_path.replace(".gz", "")
     with gzip.open(zipped_path, 'rb') as zipped:

@@ -106,32 +106,42 @@ class PharmitControl:
         time.sleep(2)
         search.click()
 
-    def _search_loop(self, count):
-        for n in range(count - count, 5):
-            self.driver.switch_to.window(f"{self.db_tuple[n]}")
-            while True:
+    def _search_loop(self, count: int):
+        search_count = 0
+        searched_dbs = []
+        while True:
+            print(f"Search count: {search_count}")
+            if search_count == 5:
+                break
+            for n in range(count - count, 5):
+                if n in searched_dbs:
+                    continue
+                self.driver.switch_to.window(f"{self.db_tuple[n]}")
                 minimize_button = self.driver.find_element(By.XPATH,
                                                            '//*[@id="pharmit"]/div[1]/div[4]/div[3]/div/button[1]')
                 try:
                     no_results = self.driver.find_element(By.CLASS_NAME, "dataTables_empty")
                     if no_results.text == 'No results found':
-                        print(no_results.text)
-                        break
+                        print(f"{no_results.text} in {self.db_tuple[n]}")
+                        search_count += 1
                 except NoSuchElementException:
                     pass
 
                 if minimize_button.is_enabled():
+                    print(f"Minimizing {self.db_tuple[n]}")
                     time.sleep(1)
                     number_of_hits = self._get_screening_stats()
-                    self._write_screening_stats(number_of_hits, self.db_tuple[n])
+                    utils.write_screening_stats(number_of_hits, self.db_tuple[n], self.output_folder_path)
                     minimize_button.click()
                     try:
                         self.driver.switch_to.alert.dismiss()
                     except NoAlertPresentException:
                         pass
-                    break
+                    search_count += 1
+                    searched_dbs.append(n)
                 else:
-                    time.sleep(1)
+                    time.sleep(2)
+        utils.write_screening_stats(self.total_hits, "Total hits:", self.output_folder_path)
 
     def _get_screening_stats(self):
         element = self.driver.find_element(By.ID, "DataTables_Table_0_info")
@@ -149,14 +159,7 @@ class PharmitControl:
 
         return number_of_hits
 
-    def _write_screening_stats(self, number_of_hits: str, db: str, final=False):
-        with open(f"{self.output_folder_path}/results/search-stats.txt", "a") as stats:
-            stats.write(f"{db}: {number_of_hits} hits\n")
-        if final:
-            with open(f"{self.output_folder_path}/results/search-stats.txt", "a") as stats:
-                stats.write(f"Total hits: {self.total_hits}\n")
-
-    def _download_loop(self, count):
+    def _download_loop(self, count: int):
         proceed = False
         downloaded_dbs = []
         while True:
@@ -172,6 +175,7 @@ class PharmitControl:
                 time.sleep(5)
                 save_button = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[3]/div[3]/div[2]/button')
                 if save_button.is_enabled():
+                    print(f"Downloading {self.db_tuple[n]}")
                     time.sleep(1)
                     save_button.click()
                     self.minimize_count += 1

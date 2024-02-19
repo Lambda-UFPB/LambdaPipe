@@ -27,6 +27,7 @@ import time
 @click.option("--pharma", is_flag=True, help="Prompt the user for additional input")
 @click.option("--output", type=click.Path(), help="Folder name containing the results")
 def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
+    start_time = time.time()
     folder_name = output if output else generate_folder_name()
     output_folder_path = create_folders(folder_name)
     create_stats_file(output_folder_path)
@@ -65,10 +66,9 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
     analyzer = AdmetAnalyzer(output_folder_path, admet_folder, dict_final, smiles_list)
     analyzer.run_admet_analyzer()
     click.echo(f"\nGo to the {folder_name} directory in files to see the final results")
+    elapsed_time = time.time()
+    click.echo(f"Total time: {elapsed_time - start_time}")
 
 
 if __name__ == "__main__":
-    start_time = time.time()
     lambdapipe()
-    end_time = time.time()
-    print(f"Total time: {end_time - start_time}")
