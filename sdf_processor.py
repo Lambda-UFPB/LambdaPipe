@@ -14,6 +14,9 @@ class SdfProcessor:
         self.analyzed_mol = set()
         self.files_path = f"{os.getcwd()}/files"
 
+    def __getitem__(self, index):
+        return self.best_molecules[index]
+
     def _get_sdfs(self):
         """Get the .sdfs files from download page"""
         last_files = utils.get_last_files(file_pattern='minimized_results*', minimize_count=self.minimize_count)

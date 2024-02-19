@@ -13,6 +13,19 @@ class JsonHandler:
         else:
             self.session = self.load_json()
 
+    def __str__(self):
+        pharma_string = ""
+        for index, pharmacophore in enumerate(self.session["points"]):
+            pharma_name = pharmacophore["name"]
+            if pharma_name == "InclusionSphere":
+                continue
+            pharma_coord = f"{pharmacophore['x']}, {pharmacophore['y']}, {pharmacophore['z']}"
+            pharma_status = pharmacophore["enabled"]
+            pharma_switch = "[on]" if pharma_status else "[off]"
+            pharma_string += f"[{index + 1}]{pharma_switch}---{pharma_name}({pharma_coord})\n"
+
+        return pharma_string
+
     def load_json(self):
         session_download_path = utils.get_last_files(file_pattern='pharmit*.json*',
                                                      old_download_list=self.old_download_list)

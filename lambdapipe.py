@@ -22,10 +22,10 @@ import time
 @click.command()
 @click.argument("receptor_file", type=click.Path(exists=True), required=True)
 @click.argument("ligand_file", type=click.Path(exists=True), required=True)
-@click.option("--top", type=int, default=50, help="The number of the top molecules by score to search in admetlab 2.0")
-@click.option("--rmsd", type=float, default=7.0, help="RMSD threshold for filtering the results")
-@click.option("--pharma", is_flag=True, help="Prompt the user for additional input")
-@click.option("--output", type=click.Path(), help="Folder name containing the results")
+@click.option("-t", "--top", type=int, default=50, help="The number of the top molecules by score to search in admetlab 2.0")
+@click.option("-r", "--rmsd", type=float, default=7.0, help="RMSD threshold for filtering the results")
+@click.option("-p", "--pharma", is_flag=True, help="Prompt the user for additional input")
+@click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
 def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
     start_time = time.time()
     folder_name = output if output else generate_folder_name()
@@ -41,10 +41,10 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
 
     if pharma:
         while True:
-            click.echo(phc.show_pharmacophore_menu(jsh.session))
+            click.echo(jsh)
             switch = click.prompt("Pharmacophore feature number that you want to switch "
                                   "(Enter 0 to start search with the current features)", type=int)
-            time.sleep(2)
+            time.sleep(1)
             if switch == 0:
                 break
             else:
@@ -53,7 +53,7 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
 
     click.echo("Starting pharmit search...")
     minimize_count = phc.run_pharmit_search(modified_json_path)
-
+    '''
     click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, rmsd)
     dict_final = sdfp.run_sdfprocessor()
@@ -68,6 +68,7 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
     click.echo(f"\nGo to the {folder_name} directory in files to see the final results")
     elapsed_time = time.time()
     click.echo(f"Total time: {elapsed_time - start_time}")
+    '''
 
 
 if __name__ == "__main__":

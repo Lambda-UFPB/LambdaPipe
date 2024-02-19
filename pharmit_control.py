@@ -76,20 +76,6 @@ class PharmitControl:
         database = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[1]/button[1]')
         self.driver.execute_script("arguments[0].setAttribute('value', arguments[1]);", database, db)
 
-    @staticmethod
-    def show_pharmacophore_menu(pharmit_json):
-        pharma_string = ""
-        for index, pharmacophore in enumerate(pharmit_json["points"]):
-            pharma_name = pharmacophore["name"]
-            if pharma_name == "InclusionSphere":
-                continue
-            pharma_coord = f"{pharmacophore['x']}, {pharmacophore['y']}, {pharmacophore['z']}"
-            pharma_status = pharmacophore["enabled"]
-            pharma_switch = "[on]" if pharma_status else "[off]"
-            pharma_string += f"[{index + 1}]{pharma_switch}---{pharma_name}({pharma_coord})\n"
-
-        return pharma_string
-
     def _upload_json(self, count, db, modified_json_path):
         if count <= 4:
             # Upload session
