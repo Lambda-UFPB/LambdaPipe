@@ -5,14 +5,14 @@ from rdkit import RDLogger, Chem
 
 class SdfProcessor:
     """Selects the best molecules from sdf files"""
-    def __init__(self, minimize_count, top, cli_rmsd=7.0):
+    def __init__(self, minimize_count: int, top: int, output_folder_path: str, cli_rmsd: int = 7.0):
+        self.output_folder_path = output_folder_path
         self.top = top
         self.cli_rmsd = cli_rmsd
         self.minimize_count = minimize_count
         self.sdf_files = []
         self.best_molecules = []
         self.analyzed_mol = set()
-        self.files_path = f"{os.getcwd()}/files"
 
     def __getitem__(self, index):
         return self.best_molecules[index]
@@ -26,9 +26,9 @@ class SdfProcessor:
             last_files = last_files[:-n]
 
         for file in last_files:
-            utils.transfer_to_folder(file, self.files_path, 'cp')
+            utils.transfer_to_folder(file, self.output_folder_path, 'cp')
             file_name = utils.get_file_name(file)
-            zipped_path = f"{self.files_path}/{file_name}"
+            zipped_path = f"{self.output_folder_path}/{file_name}"
             unzipped_path = utils.unzip(zipped_path)
             self.sdf_files.append(unzipped_path)
 
@@ -51,11 +51,6 @@ class SdfProcessor:
                     smiles = Chem.MolToSmiles(mol, isomericSmiles=False)
                     self.best_molecules.append((mol_ids, score, rmsd, smiles))
                     self.analyzed_mol = self.analyzed_mol.union(mol_ids_set)
-
-    def _get_top_molecules(self, top: int):
-        """Get the top n molecules"""
-        self.best_molecules.sort(key=lambda x: x[1], reverse=True)
-        self.best_molecules = self.best_molecules[:top]
     
     def _mol_check(self, mol_ids_set: set, score: float, rmsd: float) -> bool:
         """Check if the molecule is already in the analyzed_mol
@@ -68,16 +63,24 @@ class SdfProcessor:
         """Returns a dict with the top best molecules"""
         return {mol[0]: {'score': mol[1], 'rmsd': mol[2], 'smiles': mol[3]} for mol in self.best_molecules}
 
+    def _get_top_molecules(self, top: int):
+        """Get the top n molecules"""
+        self.best_molecules.sort(key=lambda x: x[1], reverse=False)
+        self.best_molecules = self.best_molecules[:top]
+
     def run_sdfprocessor(self):
         self._get_sdfs()
         self._process_sdf()
         if self.best_molecules:
-            
+            utils.write_stats(f"\nNumber of molecules after filtering (Score < -11 and RMSD < {self.cli_rmsd}): "
+                              f"{len(self.best_molecules)}", self.output_folder_path)
             if len(self.best_molecules) > self.top:
                 self._get_top_molecules(self.top)
+
             else:
                 raise ValueError(f'No sufficient molecules ({len(self.best_molecules)}) to fit '
                                  f'the minimum number of molecules: {self.top}')
+            utils.write_stats(f"\nBest score before admet research: {self.best_molecules[0]}", self.output_folder_path)
         else:
             raise ValueError('No molecules that fit the threshold found in the .sdf files')
         
@@ -85,6 +88,6 @@ class SdfProcessor:
 
 
 if __name__ == '__main__':
-    sdf = SdfProcessor(10, 50)
+    sdf = SdfProcessor(10, 50, )
     dict_final = sdf.run_sdfprocessor()
     print(dict_final)

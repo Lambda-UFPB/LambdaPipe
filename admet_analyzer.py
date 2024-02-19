@@ -1,9 +1,11 @@
 import pandas as pd
+import utils
 
 
 class AdmetAnalyzer:
     def __init__(self, output_folder_path: str, admet_path: str, best_molecules_dict: dict, dict_smiles_list: list):
         csv_path = f'{admet_path}/merged.csv'
+        self.output_folder_path = output_folder_path
         self.admet_df = pd.read_csv(csv_path)
         self.admet_path = admet_path
         self.results_path = f"{output_folder_path}/results"
@@ -79,4 +81,9 @@ class AdmetAnalyzer:
             self.admet_df[column] = self.admet_df[column].astype(object)
         self.admet_df.update(category_df)
         self._write_admet_filtered_stats()
+        best_score = self.admet_df['Score'].min()
+        num_molecules = self.admet_df.shape[0]
+        utils.write_stats(f"\nNumber of molecules after admet filter: {num_molecules}\n"
+                          f"Best score after admet research: {best_score}", self.output_folder_path)
+
         self.admet_df.to_csv(f'{self.results_path}/admet_filtered.csv', index=False)

@@ -53,9 +53,8 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
 
     click.echo("Starting pharmit search...")
     minimize_count = phc.run_pharmit_search(modified_json_path)
-    '''
     click.echo("\nProcessing Results...")
-    sdfp = SdfProcessor(minimize_count, top, rmsd)
+    sdfp = SdfProcessor(minimize_count, top, output_folder_path, rmsd)
     dict_final = sdfp.run_sdfprocessor()
 
     click.echo("\nGetting ADMET info...")
@@ -68,7 +67,6 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, output):
     click.echo(f"\nGo to the {folder_name} directory in files to see the final results")
     elapsed_time = time.time()
     click.echo(f"Total time: {elapsed_time - start_time}")
-    '''
 
 
 if __name__ == "__main__":

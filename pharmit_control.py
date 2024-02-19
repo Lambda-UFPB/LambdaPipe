@@ -4,6 +4,9 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import WebDriverException, NoSuchElementException, NoAlertPresentException
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as ec
+from selenium.common.exceptions import TimeoutException
 import re
 import time
 import utils
@@ -18,8 +21,8 @@ class PharmitControl:
         self.total_hits = 0
         options = Options()
         options.add_experimental_option('detach', True)
-        self.db_tuple = ('chembl', 'chemdiv', 'enamine', 'molport', 'mcule', 'ultimate', 'nsc', 'pubchem', 'wuxi-lab',
-                         'zinc')
+        self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
+                        ['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
         chrome_options = Options()
         possible_chrome_binary_locations = utils.get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -32,15 +35,13 @@ class PharmitControl:
         self.minimize_count = 0
 
     def _open_tab(self, count,  db):
-        if count <= 4:
-            main_tab = self.driver.current_window_handle
-
-            self.driver.execute_script(f"window.open('about:blank','{db}');")
-            self.driver.switch_to.window(f"{db}")
-            self.driver.get("https://pharmit.csb.pitt.edu/search.html")
-            time.sleep(3)
-            if count == 0:
-                self._close_tab(main_tab)
+        main_tab = self.driver.current_window_handle
+        self.driver.execute_script(f"window.open('about:blank','{db}');")
+        self.driver.switch_to.window(f"{db}")
+        self.driver.get("https://pharmit.csb.pitt.edu/search.html")
+        time.sleep(3)
+        if count == 0:
+            self._close_tab(main_tab)
         else:
             pass
 
@@ -69,65 +70,86 @@ class PharmitControl:
         time.sleep(3)
         self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/button').click()
 
-    def _change_db(self, count, db):
+    def _change_db(self, run, count, db):
         time.sleep(3)
-        if count >= 5:
-            self.driver.switch_to.window(f"{self.db_tuple[count - 5]}")
+        if run == 1:
+            self.driver.switch_to.window(f"{self.db_list[0][count]}")
+        else:
+            self.driver.switch_to.window(f"{db}")
         database = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[1]/button[1]')
         self.driver.execute_script("arguments[0].setAttribute('value', arguments[1]);", database, db)
 
-    def _upload_json(self, count, db, modified_json_path):
-        if count <= 4:
-            # Upload session
-            self.driver.switch_to.window(f"{db}")
-            load_session = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/div/input')
-            load_session.send_keys(modified_json_path)
-            time.sleep(3)
-        else:
-            pass
+    def _upload_json(self, db, modified_json_path):
+        # Upload session
+        self.driver.switch_to.window(f"{db}")
+        load_session = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/div/input')
+        load_session.send_keys(modified_json_path)
+        time.sleep(3)
 
     def _search(self):
         # Click on the search button
         search = self.driver.find_element(By.XPATH, '//*[@id="pharmitsearchbutton"]')
-        time.sleep(2)
-        search.click()
+        while True:
+            try:
+                search.click()
+                break
+            except WebDriverException:
+                pass
 
-    def _search_loop(self, count: int):
+    def _search_loop(self, run: int, db_half: list):
         search_count = 0
         searched_dbs = []
         while True:
             print(f"Search count: {search_count}")
             if search_count == 5:
                 break
-            for n in range(count - count, 5):
-                if n in searched_dbs:
+            for n, db in enumerate(db_half):
+                if db in searched_dbs:
                     continue
-                self.driver.switch_to.window(f"{self.db_tuple[n]}")
+                self.driver.switch_to.window(f"{self.db_list[0][n]}")
                 minimize_button = self.driver.find_element(By.XPATH,
                                                            '//*[@id="pharmit"]/div[1]/div[4]/div[3]/div/button[1]')
-                try:
-                    no_results = self.driver.find_element(By.CLASS_NAME, "dataTables_empty")
-                    if no_results.text == 'No results found':
-                        print(f"{no_results.text} in {self.db_tuple[n]}")
-                        search_count += 1
-                except NoSuchElementException:
-                    pass
-
+                if self._check_no_results(db):
+                    self.db_list[run].remove(db)
+                # if search_count == 4:
+                    # self._waiting_last_db(db, minimize_button)
                 if minimize_button.is_enabled():
-                    print(f"Minimizing {self.db_tuple[n]}")
-                    time.sleep(1)
-                    number_of_hits = self._get_screening_stats()
-                    utils.write_screening_stats(number_of_hits, self.db_tuple[n], self.output_folder_path)
-                    minimize_button.click()
-                    try:
-                        self.driver.switch_to.alert.dismiss()
-                    except NoAlertPresentException:
-                        pass
+                    self._minimize(minimize_button, db)
                     search_count += 1
-                    searched_dbs.append(n)
-                else:
-                    time.sleep(2)
-        utils.write_screening_stats(self.total_hits, "Total hits:", self.output_folder_path)
+                    searched_dbs.append(db)
+
+    def _waiting_last_db(self, minimize_button):
+        while True:
+            try:
+                WebDriverWait(self.driver, 10).until(ec.element_to_be_clickable(minimize_button))
+                break
+            except TimeoutException:
+                pass
+
+    def _check_no_results(self, db):
+        try:
+            no_results = self.driver.find_element(By.CLASS_NAME, "dataTables_empty")
+            if no_results.text == 'No results found':
+                print(f"{no_results.text} in {db}")
+                return True
+        except NoSuchElementException:
+            return False
+
+    def _minimize(self, minimize_button, db):
+        print(f"Minimizing {db}")
+        number_of_hits = self._get_screening_stats()
+        utils.write_stats(f"\n{db}: {number_of_hits}", self.output_folder_path)
+        while True:
+            try:
+                minimize_button.click()
+                break
+            except WebDriverException:
+                pass
+
+        try:
+            self.driver.switch_to.alert.dismiss()
+        except NoAlertPresentException:
+            pass
 
     def _get_screening_stats(self):
         element = self.driver.find_element(By.ID, "DataTables_Table_0_info")
@@ -145,37 +167,61 @@ class PharmitControl:
 
         return number_of_hits
 
-    def _download_loop(self, count: int):
+    def _download_loop(self, db_half: list):
         proceed = False
         downloaded_dbs = []
         while True:
             if proceed:
                 break
-            for n in range(count - count, 5):
-                if self.minimize_count == 5 or self.minimize_count == 10:
+            for n, db in enumerate(db_half):
+                if len(downloaded_dbs) == len(db_half):
                     proceed = True
                     break
-                if n in downloaded_dbs:
+                if db in downloaded_dbs:
                     continue
-                self.driver.switch_to.window(f"{self.db_tuple[n]}")
+                self.driver.switch_to.window(f"{self.db_list[0][n]}")
                 time.sleep(5)
                 save_button = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[3]/div[3]/div[2]/button')
                 if save_button.is_enabled():
-                    print(f"Downloading {self.db_tuple[n]}")
-                    time.sleep(1)
-                    save_button.click()
-                    self.minimize_count += 1
-                    downloaded_dbs.append(n)
+                    self.download(save_button, db)
+                    downloaded_dbs.append(db)
+
+    def download(self, save_button, db):
+        print(f"Downloading {db}")
+        time.sleep(1)
+        while True:
+            try:
+                save_button.click()
+                break
+            except WebDriverException:
+                pass
+        self.minimize_count += 1
+
+    @staticmethod
+    def check_finished_download(counter, old_download_list):
+        while True:
+            new_download_list = utils.get_download_list('minimized_results*')
+            all_downloads = len(new_download_list) - len(old_download_list)
+            if all_downloads == counter:
+                break
+            else:
+                time.sleep(2)
+        return
 
     def run_pharmit_search(self, modified_json_path):
-        for count, db in enumerate(self.db_tuple):
-            self._open_tab(count, db)
-            self._upload_json(count, db, modified_json_path)
-            self._change_db(count, db)
-            self._search()
-            if count == 4 or count == 9:
-                self._search_loop(count)
-                self._download_loop(count)
-        time.sleep(5)
-        self.driver.quit()
-        return self.minimize_count
+        old_download_list = utils.get_download_list('minimized_results*')
+        for run, db_half in enumerate(self.db_list):
+            for count, db in enumerate(db_half):
+                if run == 0:
+                    self._open_tab(count, db)
+                    self._upload_json(db, modified_json_path)
+                self._change_db(run, count, db)
+                self._search()
+            self._search_loop(run, db_half)
+            self._download_loop(db_half)
+
+        if PharmitControl.check_finished_download(self.minimize_count, old_download_list):
+            self.driver.quit()
+            utils.write_stats(f"\nTotal hits: {self.total_hits}", self.output_folder_path)
+
+            return self.minimize_count

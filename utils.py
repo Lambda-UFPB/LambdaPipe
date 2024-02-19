@@ -33,6 +33,11 @@ def generate_folder_name():
     return ''.join(random.choice(letters_and_digits) for _ in range(8))
 
 
+def write_stats(text: str, output_folder_path: str):
+    with open(f"{output_folder_path}/results/search-stats.txt", "a") as stats:
+        stats.write(text)
+
+
 def get_file_name(path: str):
     file_name = path.split("/")
     file_name = file_name[-1]
@@ -67,11 +72,6 @@ def get_chrome_binary_path():
     return [possible_path_1.replace("\n", ""), possible_path_2.replace("\n", "")]
 
 
-def write_screening_stats(number_of_hits: int, db: str, output_folder_path: str):
-    with open(f"{output_folder_path}/results/search-stats.txt", "a") as stats:
-        stats.write(f"{db}: {number_of_hits} hits\n")
-
-
 def unzip(zipped_path):
     unzipped_path = zipped_path.replace(".gz", "")
     with gzip.open(zipped_path, 'rb') as zipped:
@@ -91,6 +91,8 @@ def get_download_list(file_pattern: str):
 
 def get_last_files(file_pattern: str, old_download_list: list = None, minimize_count: int = None):
     most_recent = ''
+    if not old_download_list:
+        old_download_list = []
     while True:
         download_list = get_download_list(file_pattern)
         download_list.sort(key=os.path.getmtime, reverse=True)
