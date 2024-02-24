@@ -4,7 +4,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import WebDriverException, NoSuchElementException, NoAlertPresentException
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from .utils import *
+from utils import *
 
 
 class PharmitControl:
