@@ -41,7 +41,14 @@ class JsonHandler:
         button = self.session["points"][switch_number-1]
         button["enabled"] = not button["enabled"]
 
+    def pharma_set_parameters(self):
+        self.session["minMolWeight"] = 300
+        self.session["maxMolWeight"] = 700
+        self.session["maxlogp"] = 7
+        self.session["maxrotbonds"] = 7
+
     def create_json(self):
+        self.pharma_set_parameters()
         modified_json_path = f"{self.output_file_path}/new_session.json"
         with open(modified_json_path, 'w') as file:
             json.dump(self.session, file)
