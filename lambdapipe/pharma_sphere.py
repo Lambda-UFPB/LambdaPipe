@@ -11,6 +11,9 @@ class PharmaSphere:
         self.interaction_type = interaction_type
         self.is_donor = is_donor
 
+    def __str__(self):
+        return f"PharmaSphere({self.x}, {self.y}, {self.z}, {self.radius}, {self.interaction_type})"
+
     def distance_to(self, other_sphere):
         dx = self.x - other_sphere.x
         dy = self.y - other_sphere.y
