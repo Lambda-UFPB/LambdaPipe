@@ -4,7 +4,7 @@ from utils import *
 
 class JsonHandler:
 
-    def __init__(self, output_file_path, old_download_list, pharmit_json=None):
+    def __init__(self, output_file_path, old_download_list, pharmit_json=None, sphere_list=None):
         self.output_file_path = output_file_path
         self.old_download_list = old_download_list
         if pharmit_json:
@@ -20,8 +20,8 @@ class JsonHandler:
                 continue
             pharma_coord = f"{pharmacophore['x']}, {pharmacophore['y']}, {pharmacophore['z']}"
             pharma_status = pharmacophore["enabled"]
-            pharma_switch = "[on]" if pharma_status else "[off]"
-            pharma_string += f"[{index + 1}]{pharma_switch}---{pharma_name}({pharma_coord})\n"
+            _pharma_switch = "[on]" if pharma_status else "[off]"
+            pharma_string += f"[{index + 1}]{_pharma_switch}---{pharma_name}({pharma_coord})\n"
 
         return pharma_string
 
@@ -37,18 +37,45 @@ class JsonHandler:
         check_session(session)
         return session
 
-    def pharma_switch(self, switch_number: int):
+    def _pharma_switch(self, switch_number: int):
         button = self.session["points"][switch_number-1]
         button["enabled"] = not button["enabled"]
 
-    def pharma_set_parameters(self):
+    def _pharma_set_parameters(self):
         self.session["minMolWeight"] = 300
         self.session["maxMolWeight"] = 700
         self.session["maxlogp"] = 7
         self.session["maxrotbonds"] = 7
 
+    @staticmethod
+    def _generate_points_list(sphere_list: list):
+        points = []
+        for sphere in sphere_list:
+            point = {
+                "name": sphere.interaction_type,
+                "hasvec": 'false',
+                "x": sphere.x,
+                "y": sphere.y,
+                "z": sphere.z,
+                "radius": sphere.radius,
+                "enabled": 'true',
+                "vector_on": 0,
+                "svector": {
+                    "x": 0,
+                    "y": 0,
+                    "z": 0
+                },
+                "minsize": "",
+                "maxsize": "",
+                "selected": 'false'}
+            points.append(point)
+        return points
+
+    def write_points(self, sphere_list: list):
+        self.session["points"] = self._generate_points_list(sphere_list)
+
     def create_json(self):
-        self.pharma_set_parameters()
+        self._pharma_set_parameters()
         modified_json_path = f"{self.output_file_path}/new_session.json"
         with open(modified_json_path, 'w') as file:
             json.dump(self.session, file)

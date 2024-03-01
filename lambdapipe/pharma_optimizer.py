@@ -16,9 +16,9 @@ class PharmaOptimizer:
             'NegativeIon': [0, 'salt']
         }
         self.spheres_dict = {
-            'hydrophobic': ([], [], []),
-            'hydrogen': ([], [], []),
-            'salt': ([], [], []),
+            'hydrophobic': [],
+            'hydrogen': [[], [], []],
+            'salt': [[], [], []],
         }
 
     def generate_pharmit_spheres(self):
@@ -66,7 +66,6 @@ class PharmaOptimizer:
                 for index_pharmit, pharmit_sphere in enumerate(self.spheres_dict[interaction][0]):
                     if self.calculate_interaction(pharmit_sphere, plip_sphere, plip_index, interaction):
                         analyzed_plip_spheres_count += 1
-
             self.check_feature_number(interaction, analyzed_plip_spheres_count)
 
     def calculate_interaction(self, pharmit_sphere: PharmaSphere, plip_sphere: PharmaSphere,
@@ -85,6 +84,8 @@ class PharmaOptimizer:
             return False
 
     def check_feature_number(self, interaction: str, analyzed_plip_spheres_count: int):
+        already_enabled_append = False
+        already_disabled_append = False
         keys_from_interact = [key for key, value in self.interaction_dict.items() if interaction in value]
         for key in keys_from_interact:
             if len(self.spheres_dict[interaction][2]) < self.interaction_dict[key][0]:
@@ -98,8 +99,21 @@ class PharmaOptimizer:
                     self.spheres_dict[interaction][2].append((pharmit_sphere, 0))
 
             elif len(self.spheres_dict[interaction][2]) > self.interaction_dict[key][0]:
-                self.spheres_dict[interaction][2] = self.spheres_dict[interaction][2][:self.interaction_dict[key][0]]
+                self.spheres_dict[interaction][2].sort(key=lambda x: x[1])
+                if self.interaction_dict[key][0] == 0:
+                    for index_tuple, spheres_tuple in enumerate(self.spheres_dict[interaction][2]):
+                        spheres_name = spheres_tuple[0].interaction_type
+                        if key == spheres_name:
+                            self.spheres_dict[interaction][2] = [self.spheres_dict[interaction][2][index_tuple]]
+                            break
+                        self.spheres_dict[interaction][2] = [self.spheres_dict[interaction][2][0]]
 
+                else:
+                    if not already_enabled_append:
+
+                        self.spheres_dict[interaction][2] = self.spheres_dict[interaction][2][:self.interaction_dict[key][0]]
+                        self.spheres_dict[interaction][2].append
+                    already_enabled_appended = True
     @staticmethod
     def create_interaction_sphere(plip_sphere: PharmaSphere):
         """Creates the sphere in pharmit to interact to the plip sphere"""
@@ -123,23 +137,29 @@ class PharmaOptimizer:
 
     def get_last_pharmit_spheres(self):
         last_pharmit_spheres = []
-        for interaction in self.spheres_dict.keys():
-            for sphere in self.spheres_dict[interaction][2]:
-                last_pharmit_spheres.append(sphere[0])
+        #print(self.spheres_dict['hydrophobic'][2])
+        #print(len(self.spheres_dict['hydrogen'][2]))
+        for triple_list in self.spheres_dict.values():
+            for sphere_tuple in triple_list[2]:
+                last_pharmit_spheres.append(sphere_tuple[0])
+
         if len(last_pharmit_spheres) > 6:
             last_pharmit_spheres = last_pharmit_spheres[:5]
-
+        
         return last_pharmit_spheres
 
     def run_pharma_optimizer(self):
         pharmit_spheres_type_available = self.generate_pharmit_spheres()
         self.generate_plip_spheres(pharmit_spheres_type_available)
+        print(len(self.spheres_dict['hydrogen'][2]))
         self.analyze_sphere_pairs()
+        print(len(self.spheres_dict['hydrogen'][2]))
         return self.get_last_pharmit_spheres()
 
 
 if __name__ == '__main__':
     pharmit_json_path = '/home/kdunorat/Projetos/LambdaPipe/files/pharmit (3).json'
-    plip_csv = '/home/kdunorat/Projetos/LambdaPipe/files/teste-plip.csv'
+    plip_csv = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1-pocket3-interact.csv'
     popt = PharmaOptimizer(pharmit_json_path, plip_csv)
-    pharmit_spheres_list = popt.generate_pharmit_spheres()
+    pharmit_spheres_list = popt.run_pharma_optimizer()
+    #print(pharmit_spheres_list)
