@@ -4,10 +4,12 @@ from utils import *
 
 class JsonHandler:
 
-    def __init__(self, output_file_path, old_download_list, pharmit_json=None, sphere_list=None):
+    def __init__(self, output_file_path, old_download_list=None, pharmit_json=None, sphere_list=None):
         self.output_file_path = output_file_path
         self.old_download_list = old_download_list
         if pharmit_json:
+            with open(pharmit_json, 'r') as file:
+                pharmit_json = json.load(file)
             self.session = pharmit_json
         else:
             self.session = self.load_json()
@@ -53,12 +55,12 @@ class JsonHandler:
         for sphere in sphere_list:
             point = {
                 "name": sphere.interaction_type,
-                "hasvec": 'false',
+                "hasvec": False,
                 "x": sphere.x,
                 "y": sphere.y,
                 "z": sphere.z,
                 "radius": sphere.radius,
-                "enabled": 'true',
+                "enabled": True,
                 "vector_on": 0,
                 "svector": {
                     "x": 0,
@@ -67,7 +69,7 @@ class JsonHandler:
                 },
                 "minsize": "",
                 "maxsize": "",
-                "selected": 'false'}
+                "selected": False}
             points.append(point)
         return points
 

@@ -1,6 +1,7 @@
 import json
 import pandas as pd
 from pharma_sphere import PharmaSphere
+from json_handler import JsonHandler
 
 
 class PharmaOptimizer:
@@ -8,21 +9,16 @@ class PharmaOptimizer:
         self.plip_df = pd.read_csv(plip_csv_path)
         self.mean_quantity = self.plip_df['quantidade'].mean()
         self.pharmit_session = pharmit_session
-        self.interaction_dict = {
-            'Hydrophobic': [0, 'hydrophobic'],
-            'HydrogenDonor': [0, 'hydrogen'],
-            'HydrogenAcceptor': [0, 'hydrogen'],
-            'PositiveIon': [0, 'salt'],
-            'NegativeIon': [0, 'salt']
-        }
         self.spheres_dict = {
-            'hydrophobic': [],
-            'hydrogen': [[], [], []],
-            'salt': [[], [], []],
+            'Hydrophobic': {'enabled': 0, 'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'Hydrophobic'},
+            'HydrogenDonor': {'enabled': 0, 'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'HydrogenAcceptor'},
+            'HydrogenAcceptor': {'enabled': 0, 'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'HydrogenDonor'},
+            'PositiveIon': {'enabled': 0, 'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'NegativeIon'},
+            'NegativeIon': {'enabled': 0, 'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'PositiveIon'}
         }
+        self.pharmit_spheres_type_available = []
 
-    def generate_pharmit_spheres(self):
-
+    def _generate_pharmit_spheres(self):
         with open(self.pharmit_session, 'r') as file:
             session = json.load(file)
         pharmit_spheres_type_available = []
@@ -30,130 +26,132 @@ class PharmaOptimizer:
             if feature['name'] == 'InclusionSphere' or feature['name'] == 'Aromatic':
                 continue
             if feature['enabled']:
-                self.interaction_dict[feature['name']][0] += 1
+                self.spheres_dict[feature['name']]['enabled'] += 1
 
-            if 'Donor' in feature['name'] or 'Positive' in feature['name']:
-                is_donor = True
-            else:
-                is_donor = False
-            if self.interaction_dict[feature['name']][1] not in pharmit_spheres_type_available:
-                pharmit_spheres_type_available.append(self.interaction_dict[feature['name']][1])
+            is_donor = self._check_donor(pharmit_feature=feature)
 
-            self.spheres_dict[self.interaction_dict[feature['name']][1]][0].append(PharmaSphere(feature['x'],
-                                                                                                feature['y'],
-                                                                                                feature['z'],
-                                                                                                feature['radius'],
-                                                                                                feature['name'],
-                                                                                                is_donor))
+            if feature['name'] not in pharmit_spheres_type_available:
+                self.pharmit_spheres_type_available.append(feature['name'])
 
-        return pharmit_spheres_type_available
+            self.spheres_dict[feature['name']]['pharmit_spheres'].append(PharmaSphere(feature['x'], feature['y'],
+                                                                                      feature['z'], feature['radius'],
+                                                                                      feature['name'], is_donor))
 
-    def generate_plip_spheres(self, pharmit_spheres_type_available: list):
+    def _generate_plip_spheres(self):
         for index, row in self.plip_df.iterrows():
-            if row['type'] in pharmit_spheres_type_available and row['quantidade'] >= 300:
-                if pd.isna(row['protis']):
-                    is_donor = None
-                else:
-                    is_donor = row['protis']
-                self.spheres_dict[row['type']][1].append((PharmaSphere(row['x'], row['y'], row['z'], row['raio'],
-                                                                       row['type'], is_donor=is_donor), index))
+            if row['type'] in self.pharmit_spheres_type_available and row['quantidade'] > self.mean_quantity:
+                is_donor = self._check_donor(plip_row=row)
+                plip_interaction_type = self._plip_new_interaction_type(row['type'], is_donor)
+                if plip_interaction_type in self.pharmit_spheres_type_available:
+                    plip_sphere = PharmaSphere(row['x'], row['y'], row['z'], row['raio'], plip_interaction_type,
+                                               is_donor, index=index)
+                    plip_sphere.quantity = row['quantidade']
+                    self.spheres_dict[plip_interaction_type]['plip_spheres'].append(plip_sphere)
+
+    @staticmethod
+    def _check_donor(pharmit_feature: dict = None, plip_row: pd.Series = None):
+        if pharmit_feature:
+            if 'Donor' in pharmit_feature['name'] or 'Positive' in pharmit_feature['name']:
+                donor = True
+            else:
+                donor = False
+        else:
+            if pd.isna(plip_row['protis']):
+                donor = None
+            else:
+                donor = plip_row['protis']
+
+        return donor
+
+    @staticmethod
+    def _plip_new_interaction_type(row_type: str, is_donor: bool):
+        if row_type == 'hydrogen':
+            if is_donor:
+                return 'HydrogenDonor'
+            else:
+                return 'HydrogenAcceptor'
+        elif row_type == 'salt':
+            if is_donor:
+                return 'PositiveIon'
+            else:
+                return 'NegativeIon'
+        elif row_type == 'hydrophobic':
+            return 'Hydrophobic'
+        else:
+            return None
 
     def analyze_sphere_pairs(self):
-        analyzed_plip_spheres_count = 0
-        for interaction in self.spheres_dict.keys():
-            for plip_tuple in self.spheres_dict[interaction][1]:
-                plip_sphere, plip_index = plip_tuple
-                for index_pharmit, pharmit_sphere in enumerate(self.spheres_dict[interaction][0]):
-                    if self.calculate_interaction(pharmit_sphere, plip_sphere, plip_index, interaction):
-                        analyzed_plip_spheres_count += 1
-            self.check_feature_number(interaction, analyzed_plip_spheres_count)
+        for interaction in self.pharmit_spheres_type_available:
+            for pharmit_sphere in self.spheres_dict[interaction]['pharmit_spheres']:
+                self._interaction_distance_check(pharmit_sphere, interaction)
+        self.check_feature_number()
 
-    def calculate_interaction(self, pharmit_sphere: PharmaSphere, plip_sphere: PharmaSphere,
-                              plip_index: int, interaction: str):
-        plip_interaction_quantity = self.plip_df['quantidade'][plip_index]
-        distance = pharmit_sphere.distance_to(plip_sphere)
-        if distance <= self.plip_df['avg_dist'][plip_index] and plip_interaction_quantity > self.mean_quantity:
-            if interaction == 'hydrophobic':
-                self.spheres_dict[interaction][2].append((pharmit_sphere, distance))
-                return True
+    def _interaction_distance_check(self, pharmit_sphere: PharmaSphere, interaction: str):
+        opposite_interaction = self.spheres_dict[interaction]['opposite']
+        if not self.spheres_dict[opposite_interaction]['plip_spheres']:
+            return
+        for plip_sphere in self.spheres_dict[opposite_interaction]['plip_spheres']:
+            plip_index = plip_sphere.index
+            distance = pharmit_sphere.distance_to(plip_sphere)
+            if distance > self.plip_df['avg_dist'][plip_index]:
+                self.spheres_dict[interaction]['pharmit_spheres'].remove(pharmit_sphere)
             else:
-                if pharmit_sphere.is_donor != plip_sphere.is_donor:
-                    self.spheres_dict[interaction][2].append((pharmit_sphere, distance))
-                    return True
-        else:
-            return False
+                pharmit_sphere.quantity_matched = plip_sphere.quantity
 
-    def check_feature_number(self, interaction: str, analyzed_plip_spheres_count: int):
-        already_enabled_append = False
-        already_disabled_append = False
-        keys_from_interact = [key for key, value in self.interaction_dict.items() if interaction in value]
-        for key in keys_from_interact:
-            if len(self.spheres_dict[interaction][2]) < self.interaction_dict[key][0]:
-                spheres_to_create = self.interaction_dict[key][0] - len(self.spheres_dict[interaction][2])
-                plip_spheres_remaining = self.spheres_dict[interaction][1][analyzed_plip_spheres_count:]
-
-                for index, plip_sphere in plip_spheres_remaining:
-                    if index >= spheres_to_create:
-                        break
-                    pharmit_sphere = self.create_interaction_sphere(plip_sphere)
-                    self.spheres_dict[interaction][2].append((pharmit_sphere, 0))
-
-            elif len(self.spheres_dict[interaction][2]) > self.interaction_dict[key][0]:
-                self.spheres_dict[interaction][2].sort(key=lambda x: x[1])
-                if self.interaction_dict[key][0] == 0:
-                    for index_tuple, spheres_tuple in enumerate(self.spheres_dict[interaction][2]):
-                        spheres_name = spheres_tuple[0].interaction_type
-                        if key == spheres_name:
-                            self.spheres_dict[interaction][2] = [self.spheres_dict[interaction][2][index_tuple]]
-                            break
-                        self.spheres_dict[interaction][2] = [self.spheres_dict[interaction][2][0]]
-
+    def check_feature_number(self):
+        analyzed_quantities = []
+        for key, dicti in self.spheres_dict.items():
+            opposite = self.spheres_dict[key]['opposite']
+            plip_list = self.spheres_dict[opposite]['plip_spheres']
+            if not dicti['pharmit_spheres']:
+                continue
+            if len(dicti['pharmit_spheres']) > dicti['enabled']:
+                if dicti['enabled'] == 0:
+                    self._create_interaction_sphere(plip_list, analyzed_quantities, dicti['pharmit_spheres'],
+                                                    1)
                 else:
-                    if not already_enabled_append:
+                    dicti['pharmit_spheres'].sort(key=lambda x: x.quantity_matched, reverse=True)
+                    dicti['pharmit_spheres'] = dicti['pharmit_spheres'][:dicti['enabled']]
+            elif dicti['pharmit_spheres'] < dicti['enabled']:
+                spheres_to_create = dicti['enabled'] - len(dicti['pharmit_spheres'])
+                analyzed_quantities = [pharmit_sphere.quantity_matched for pharmit_sphere in dicti['pharmit_spheres']]
+                self._create_interaction_sphere(plip_list, analyzed_quantities, dicti['pharmit_spheres'],
+                                                spheres_to_create)
+            else:
+                continue
 
-                        self.spheres_dict[interaction][2] = self.spheres_dict[interaction][2][:self.interaction_dict[key][0]]
-                        self.spheres_dict[interaction][2].append
-                    already_enabled_appended = True
     @staticmethod
-    def create_interaction_sphere(plip_sphere: PharmaSphere):
+    def _create_interaction_sphere(plip_spheres: list, analyzed_quantities: list, original_pharmit_spheres: list,
+                                   quantity_to_create: int):
         """Creates the sphere in pharmit to interact to the plip sphere"""
-        if plip_sphere.interaction_type == 'hydrogen':
-            if plip_sphere.is_donor:  # if protein is donor
-                pharmit_sphere_interaction = 'HydrogenAcceptor'
-            else:
-                pharmit_sphere_interaction = 'HydrogenDonor'
-        elif plip_sphere.interaction_type == 'salt':
-            if plip_sphere.is_donor:
-                pharmit_sphere_interaction = 'NegativeIon'
-            else:
-                pharmit_sphere_interaction = 'PositiveIon'
-        else:
-            pharmit_sphere_interaction = 'Hydrophobic'
+        pharmit_sphere = None
+        for q in range(quantity_to_create):
+            for plip_sphere in plip_spheres:
+                if plip_sphere.quantity in analyzed_quantities:
+                    continue
+                else:
+                    pharmit_sphere_interaction = plip_sphere.interaction_type
+                    pharmit_sphere = PharmaSphere(plip_sphere.x, plip_sphere.y, plip_sphere.z, 1.0,
+                                                  pharmit_sphere_interaction, False)
+            if not pharmit_sphere:
+                continue
 
-        pharmit_sphere = PharmaSphere(plip_sphere.x, plip_sphere.y, plip_sphere.z, 1.0,
-                                      pharmit_sphere_interaction, False)
-
-        return pharmit_sphere
+            original_pharmit_spheres.append(pharmit_sphere)
 
     def get_last_pharmit_spheres(self):
         last_pharmit_spheres = []
-        #print(self.spheres_dict['hydrophobic'][2])
-        #print(len(self.spheres_dict['hydrogen'][2]))
-        for triple_list in self.spheres_dict.values():
-            for sphere_tuple in triple_list[2]:
-                last_pharmit_spheres.append(sphere_tuple[0])
+        for key, dicti in self.spheres_dict.items():
+            last_pharmit_spheres += dicti['pharmit_spheres']
 
         if len(last_pharmit_spheres) > 6:
-            last_pharmit_spheres = last_pharmit_spheres[:5]
+            last_pharmit_spheres = last_pharmit_spheres[:6]
         
         return last_pharmit_spheres
 
     def run_pharma_optimizer(self):
-        pharmit_spheres_type_available = self.generate_pharmit_spheres()
-        self.generate_plip_spheres(pharmit_spheres_type_available)
-        print(len(self.spheres_dict['hydrogen'][2]))
+        self._generate_pharmit_spheres()
+        self._generate_plip_spheres()
         self.analyze_sphere_pairs()
-        print(len(self.spheres_dict['hydrogen'][2]))
         return self.get_last_pharmit_spheres()
 
 
@@ -162,4 +160,6 @@ if __name__ == '__main__':
     plip_csv = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1-pocket3-interact.csv'
     popt = PharmaOptimizer(pharmit_json_path, plip_csv)
     pharmit_spheres_list = popt.run_pharma_optimizer()
-    #print(pharmit_spheres_list)
+    jsh = JsonHandler(output_file_path='/home/kdunorat/Projetos/LambdaPipe/files', pharmit_json=pharmit_json_path)
+    jsh.write_points(pharmit_spheres_list)
+    jsh.create_json()

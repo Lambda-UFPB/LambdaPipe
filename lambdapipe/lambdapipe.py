@@ -76,7 +76,7 @@ def creating_complex(receptor_file, ligand_file, output_folder_path, old_downloa
     phc = PharmitControl(get_absolute_path(receptor_file), get_absolute_path(ligand_file), output_folder_path)
     phc.upload_complex()
     phc.get_json()
-    jsh = JsonHandler(output_folder_path, old_download_list)
+    jsh = JsonHandler(output_file_path=output_folder_path, old_download_list=old_download_list)
 
     return jsh, phc
 

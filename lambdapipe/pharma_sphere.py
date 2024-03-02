@@ -3,13 +3,17 @@ import numpy as np
 
 
 class PharmaSphere:
-    def __init__(self, x, y, z, radius, interaction_type, is_donor):
+    def __init__(self, x, y, z, radius, interaction_type, is_donor, index=None):
         self.x = x
         self.y = y
         self.z = z
         self.radius = radius
         self.interaction_type = interaction_type
         self.is_donor = is_donor
+        self.index = index
+        self.distance = 0
+        self.quantity = 0
+        self.quantity_matched = 0
 
     def __str__(self):
         return f"PharmaSphere({self.x}, {self.y}, {self.z}, {self.radius}, {self.interaction_type})"
