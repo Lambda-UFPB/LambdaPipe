@@ -37,9 +37,10 @@ class PharmaOptimizer:
                                                                                       feature['z'], feature['radius'],
                                                                                       feature['name'], is_donor))
 
+
     def _generate_plip_spheres(self):
         for index, row in self.plip_df.iterrows():
-            if row['type'] in self.pharmit_spheres_type_available and row['quantidade'] > self.mean_quantity:
+            if row['quantidade'] > self.mean_quantity:
                 is_donor = self._check_donor(plip_row=row)
                 plip_interaction_type = self._plip_new_interaction_type(row['type'], is_donor)
                 if plip_interaction_type in self.pharmit_spheres_type_available:
@@ -90,53 +91,64 @@ class PharmaOptimizer:
         opposite_interaction = self.spheres_dict[interaction]['opposite']
         if not self.spheres_dict[opposite_interaction]['plip_spheres']:
             return
+        match = False
         for plip_sphere in self.spheres_dict[opposite_interaction]['plip_spheres']:
             plip_index = plip_sphere.index
             distance = pharmit_sphere.distance_to(plip_sphere)
-            if distance > self.plip_df['avg_dist'][plip_index]:
-                self.spheres_dict[interaction]['pharmit_spheres'].remove(pharmit_sphere)
-            else:
+            if distance < self.plip_df['avg_dist'][plip_index]:
                 pharmit_sphere.quantity_matched = plip_sphere.quantity
+                match = True
+        if not match:
+            self.spheres_dict[interaction]['pharmit_spheres'].remove(pharmit_sphere)
 
     def check_feature_number(self):
         analyzed_quantities = []
         for key, dicti in self.spheres_dict.items():
             opposite = self.spheres_dict[key]['opposite']
-            plip_list = self.spheres_dict[opposite]['plip_spheres']
+            plip_opp_list = self.spheres_dict[opposite]['plip_spheres']
             if not dicti['pharmit_spheres']:
                 continue
             if len(dicti['pharmit_spheres']) > dicti['enabled']:
                 if dicti['enabled'] == 0:
-                    self._create_interaction_sphere(plip_list, analyzed_quantities, dicti['pharmit_spheres'],
-                                                    1)
+                    new_sphere = self._create_interaction_sphere(plip_opp_list, analyzed_quantities,
+                                                    1, append=False)
+                    dicti['pharmit_spheres'] = new_sphere
                 else:
                     dicti['pharmit_spheres'].sort(key=lambda x: x.quantity_matched, reverse=True)
                     dicti['pharmit_spheres'] = dicti['pharmit_spheres'][:dicti['enabled']]
-            elif dicti['pharmit_spheres'] < dicti['enabled']:
+            elif len(dicti['pharmit_spheres']) < dicti['enabled']:
                 spheres_to_create = dicti['enabled'] - len(dicti['pharmit_spheres'])
                 analyzed_quantities = [pharmit_sphere.quantity_matched for pharmit_sphere in dicti['pharmit_spheres']]
-                self._create_interaction_sphere(plip_list, analyzed_quantities, dicti['pharmit_spheres'],
-                                                spheres_to_create)
+                new_spheres = self._create_interaction_sphere(plip_opp_list, analyzed_quantities,
+                                                              spheres_to_create)
+                if not new_spheres:
+                    dicti['pharmit_spheres'].append(lambda: x for x in plip_opp_list[:spheres_to_create])
+                for new_sphere in new_spheres:
+                    dicti['pharmit_spheres'].append(new_sphere)
+
             else:
                 continue
 
     @staticmethod
-    def _create_interaction_sphere(plip_spheres: list, analyzed_quantities: list, original_pharmit_spheres: list,
-                                   quantity_to_create: int):
+    def _create_interaction_sphere(plip_spheres: list, analyzed_quantities: list,
+                                   quantity_to_create: int, append=True):
         """Creates the sphere in pharmit to interact to the plip sphere"""
+        new_spheres = []
         pharmit_sphere = None
         for q in range(quantity_to_create):
             for plip_sphere in plip_spheres:
                 if plip_sphere.quantity in analyzed_quantities:
                     continue
                 else:
-                    pharmit_sphere_interaction = plip_sphere.interaction_type
                     pharmit_sphere = PharmaSphere(plip_sphere.x, plip_sphere.y, plip_sphere.z, 1.0,
-                                                  pharmit_sphere_interaction, False)
+                                                  plip_sphere.interaction_type, False)
             if not pharmit_sphere:
                 continue
-
-            original_pharmit_spheres.append(pharmit_sphere)
+            if append:
+                new_spheres.append(pharmit_sphere)
+            else:
+                new_spheres = [pharmit_sphere]
+        return new_spheres
 
     def get_last_pharmit_spheres(self):
         last_pharmit_spheres = []
