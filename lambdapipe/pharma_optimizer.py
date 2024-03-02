@@ -37,7 +37,6 @@ class PharmaOptimizer:
                                                                                       feature['z'], feature['radius'],
                                                                                       feature['name'], is_donor))
 
-
     def _generate_plip_spheres(self):
         for index, row in self.plip_df.iterrows():
             if row['quantidade'] > self.mean_quantity:
@@ -96,10 +95,12 @@ class PharmaOptimizer:
             plip_index = plip_sphere.index
             distance = pharmit_sphere.distance_to(plip_sphere)
             if distance < self.plip_df['avg_dist'][plip_index]:
-                pharmit_sphere.quantity_matched = plip_sphere.quantity
+                if plip_sphere.quantity > pharmit_sphere.quantity_matched:
+                    pharmit_sphere.quantity_matched = plip_sphere.quantity
                 match = True
         if not match:
             self.spheres_dict[interaction]['pharmit_spheres'].remove(pharmit_sphere)
+
 
     def check_feature_number(self):
         analyzed_quantities = []
@@ -113,6 +114,7 @@ class PharmaOptimizer:
                     new_sphere = self._create_interaction_sphere(plip_opp_list, analyzed_quantities,
                                                     1, append=False)
                     dicti['pharmit_spheres'] = new_sphere
+
                 else:
                     dicti['pharmit_spheres'].sort(key=lambda x: x.quantity_matched, reverse=True)
                     dicti['pharmit_spheres'] = dicti['pharmit_spheres'][:dicti['enabled']]
@@ -129,19 +131,23 @@ class PharmaOptimizer:
             else:
                 continue
 
-    @staticmethod
-    def _create_interaction_sphere(plip_spheres: list, analyzed_quantities: list,
+    def _create_interaction_sphere(self, plip_spheres: list, analyzed_quantities: list,
                                    quantity_to_create: int, append=True):
         """Creates the sphere in pharmit to interact to the plip sphere"""
         new_spheres = []
         pharmit_sphere = None
+        match = False
         for q in range(quantity_to_create):
             for plip_sphere in plip_spheres:
                 if plip_sphere.quantity in analyzed_quantities:
                     continue
                 else:
-                    pharmit_sphere = PharmaSphere(plip_sphere.x, plip_sphere.y, plip_sphere.z, 1.0,
-                                                  plip_sphere.interaction_type, False)
+                    interaction_name = self.spheres_dict[plip_sphere.interaction_type]['opposite']
+                    if not match or plip_sphere.quantity > pharmit_sphere.quantity_matched:
+                        pharmit_sphere = PharmaSphere(plip_sphere.x, plip_sphere.y, plip_sphere.z, 1.0,
+                                                      interaction_name, False)
+                        pharmit_sphere.quantity_matched = plip_sphere.quantity
+                        match = True
             if not pharmit_sphere:
                 continue
             if append:
@@ -154,7 +160,6 @@ class PharmaOptimizer:
         last_pharmit_spheres = []
         for key, dicti in self.spheres_dict.items():
             last_pharmit_spheres += dicti['pharmit_spheres']
-
         if len(last_pharmit_spheres) > 6:
             last_pharmit_spheres = last_pharmit_spheres[:6]
         
