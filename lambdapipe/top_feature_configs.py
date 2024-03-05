@@ -54,7 +54,6 @@ if __name__ == '__main__':
     pharmit_spheres_list = popt.run_pharma_optimizer()
     configs_list = run_feature_configs(pharmit_spheres_list)
 
-    """"""
     jsh = JsonHandler(output_file_path='/home/kdunorat/Projetos/LambdaPipe/files', pharmit_json=pharmit_json_path)
     jsh.write_points(configs_list)
     jsh.create_json()

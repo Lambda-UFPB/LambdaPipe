@@ -100,6 +100,7 @@ class PharmitControl:
             for n, db in enumerate(db_half):
                 if db in searched_dbs:
                     continue
+                time.sleep(3)
                 self.driver.switch_to.window(f"{self.db_list[0][n]}")
                 minimize_button = self.driver.find_element(By.XPATH,
                                                            '//*[@id="pharmit"]/div[1]/div[4]/div[3]/div/button[1]')
@@ -114,6 +115,7 @@ class PharmitControl:
         try:
             no_results = self.driver.find_element(By.CLASS_NAME, "dataTables_empty")
             if no_results.text == 'No results found':
+                print("NÃO FEZ")
                 print(f"{no_results.text} in {db}")
                 return True
         except NoSuchElementException:

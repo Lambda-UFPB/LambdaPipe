@@ -4,7 +4,7 @@ from utils import *
 
 class JsonHandler:
 
-    def __init__(self, output_file_path, old_download_list=None, pharmit_json=None, sphere_list=None):
+    def __init__(self, output_file_path, old_download_list=None, pharmit_json=None):
         self.output_file_path = output_file_path
         self.old_download_list = old_download_list
         if pharmit_json:
@@ -13,6 +13,7 @@ class JsonHandler:
             self.session = pharmit_json
         else:
             self.session = self.load_json()
+        self._pharma_set_parameters()
         self.new_sessions_list = []
 
     def __str__(self):
@@ -80,12 +81,17 @@ class JsonHandler:
             new_session["points"] = self._generate_points_list(sphere_tuple)
             self.new_sessions_list.append(new_session)
 
-    def create_json(self):
+    def create_json(self, return_list=False):
         modified_json_path_list = []
-        self._pharma_set_parameters()
-        for index, new_session in enumerate(self.new_sessions_list):
-            modified_json_path = f"{self.output_file_path}/new_session{index+1}.json"
+        if return_list:
+            for index, new_session in enumerate(self.new_sessions_list):
+                modified_json_path = f"{self.output_file_path}/new_session{index+1}.json"
+                with open(modified_json_path, 'w') as file:
+                    json.dump(new_session, file)
+                modified_json_path_list.append(modified_json_path)
+            return modified_json_path_list
+        else:
+            modified_json_path = f"{self.output_file_path}/new_session.json"
             with open(modified_json_path, 'w') as file:
-                json.dump(new_session, file)
-            modified_json_path_list.append(modified_json_path)
-        return modified_json_path_list
+                json.dump(self.session, file)
+            return modified_json_path

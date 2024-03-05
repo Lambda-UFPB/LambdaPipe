@@ -5,10 +5,10 @@ from json_handler import JsonHandler
 
 
 class PharmaOptimizer:
-    def __init__(self, pharmit_session: str, plip_csv_path: str):
+    def __init__(self, pharmit_session: json, plip_csv_path: str):
+        self.pharmit_session = pharmit_session
         self.plip_df = pd.read_csv(plip_csv_path)
         self.mean_quantity = self.plip_df['quantidade'].mean()
-        self.pharmit_session = pharmit_session
         self.spheres_dict = {
             'Hydrophobic': {'enabled': 0, 'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'Hydrophobic',
                             'pharmit_final_size': 0},
@@ -24,10 +24,8 @@ class PharmaOptimizer:
         self.pharmit_spheres_type_available = []
 
     def _generate_pharmit_spheres(self):
-        with open(self.pharmit_session, 'r') as file:
-            session = json.load(file)
         pharmit_spheres_type_available = []
-        for feature in session['points']:
+        for feature in self.pharmit_session['points']:
             if feature['name'] == 'InclusionSphere' or feature['name'] == 'Aromatic':
                 continue
             if feature['enabled']:

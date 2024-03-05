@@ -10,6 +10,8 @@ Email: kdu.norat@gmail.com
 
 import click
 from pharmit_control import PharmitControl
+from top_feature_configs import run_feature_configs
+from pharma_optimizer import PharmaOptimizer
 from json_handler import JsonHandler
 from sdf_processor import SdfProcessor
 from admet_request import run_admet_request
@@ -22,7 +24,7 @@ import time
 @click.command()
 @click.argument("receptor_file", type=click.Path(exists=True), required=False)
 @click.argument("ligand_file", type=click.Path(exists=True), required=False)
-@click.option("-t", "--top", type=int, default=50,
+@click.option("-t", "--top", type=int, default=100,
               help="The number of the top molecules by score to search in admetlab 2.0")
 @click.option("-r", "--rmsd", type=float, default=7.0, help="RMSD threshold for filtering the results")
 @click.option("-p", "--pharma", is_flag=True, help="Prompt the user for additional input")
@@ -33,21 +35,40 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
     if (not session and (not receptor_file or not ligand_file)) or (session and (receptor_file or ligand_file)):
         raise click.BadParameter(
             "You must provide either a session or both a receptor file and a ligand file.")
+    if (plip_csv and session) or (plip_csv and pharma):
+        raise click.BadParameter(
+            "You can't provide a plip csv file with a session or with the pharma flag.")
 
     start_time = time.time()
     folder_name = output if output else generate_folder_name()
     output_folder_path, admet_folder, old_download_list = create_folder(folder_name)
     if session:
         phc = PharmitControl('', '', output_folder_path)
-        modified_json_path = session
+        new_session = session
+
     else:
         jsh, phc = creating_complex(receptor_file, ligand_file, output_folder_path, old_download_list)
-        if pharma and not session:
+        if pharma:
             pharmacophore_selection_menu(jsh)
-        modified_json_path = jsh.create_json()
+            new_session = [jsh.create_json()]
+        elif plip_csv:
+            popt = PharmaOptimizer(jsh.session, plip_csv)
+            pharmit_spheres_list = popt.run_pharma_optimizer()
+            configs_list = run_feature_configs(pharmit_spheres_list)
+            jsh.write_points(configs_list)
+            new_session = jsh.create_json(return_list=True)
+        else:
+            new_session = [jsh.create_json()]
 
-    click.echo("Starting pharmit search...")
-    minimize_count = phc.run_pharmit_search(modified_json_path)
+    exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time)
+
+
+def exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time):
+    minimize_count = 0
+    for session in reversed(new_session):
+        click.echo("Starting pharmit search...")
+        minimize_count += phc.run_pharmit_search(session)
+
     click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, rmsd)
     dict_final = sdfp.run_sdfprocessor()
