@@ -27,8 +27,9 @@ import time
 @click.option("-r", "--rmsd", type=float, default=7.0, help="RMSD threshold for filtering the results")
 @click.option("-p", "--pharma", is_flag=True, help="Prompt the user for additional input")
 @click.option("-s", "--session", type=str, help="Session file for pharmit search")
+@click.option("--plip_csv", type=str, help="PLIP csv file for optimized pharmit search")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
-def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, output):
+def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv, output):
     if (not session and (not receptor_file or not ligand_file)) or (session and (receptor_file or ligand_file)):
         raise click.BadParameter(
             "You must provide either a session or both a receptor file and a ligand file.")
