@@ -13,6 +13,7 @@ class JsonHandler:
             self.session = pharmit_json
         else:
             self.session = self.load_json()
+        self.new_sessions_list = []
 
     def __str__(self):
         pharma_string = ""
@@ -49,6 +50,8 @@ class JsonHandler:
         self.session["maxlogp"] = 7
         self.session["maxrotbonds"] = 7
 
+        self.new_sessions_list.append(self.session)
+
     @staticmethod
     def _generate_points_list(sphere_list: list):
         points = []
@@ -73,12 +76,19 @@ class JsonHandler:
             points.append(point)
         return points
 
-    def write_points(self, sphere_list: list):
-        self.session["points"] = self._generate_points_list(sphere_list)
+    def write_points(self, sphere_list: list, number_configs: int):
+
+        for i in range(number_configs):
+            new_session = self.session.copy()
+            new_session["points"] = self._generate_points_list(sphere_list[i])
+            self.new_sessions_list.append(new_session)
 
     def create_json(self):
+        modified_json_path_list = []
         self._pharma_set_parameters()
-        modified_json_path = f"{self.output_file_path}/new_session.json"
-        with open(modified_json_path, 'w') as file:
-            json.dump(self.session, file)
-        return modified_json_path
+        for index, new_session in enumerate(self.new_sessions_list):
+            modified_json_path = f"{self.output_file_path}/new_session{index+1}.json"
+            with open(modified_json_path, 'w') as file:
+                json.dump(self.session, file)
+            modified_json_path_list.append(modified_json_path)
+        return modified_json_path_list
