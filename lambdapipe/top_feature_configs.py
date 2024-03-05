@@ -44,7 +44,7 @@ def run_feature_configs(spheres_list: list):
         max_tuple = max_quantity_tuple(combinations_list)
         final_combinations.append(max_tuple)
 
-    return final_combinations, number_configs
+    return final_combinations
 
 
 if __name__ == '__main__':
@@ -52,9 +52,11 @@ if __name__ == '__main__':
     plip_csv = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1-pocket3-interact.csv'
     popt = PharmaOptimizer(pharmit_json_path, plip_csv)
     pharmit_spheres_list = popt.run_pharma_optimizer()
-    configs_list, number_conf = run_feature_configs(pharmit_spheres_list)
+    configs_list = run_feature_configs(pharmit_spheres_list)
+
+    """"""
     jsh = JsonHandler(output_file_path='/home/kdunorat/Projetos/LambdaPipe/files', pharmit_json=pharmit_json_path)
-    jsh.write_points(pharmit_spheres_list, number_conf)
+    jsh.write_points(configs_list)
     jsh.create_json()
 
 

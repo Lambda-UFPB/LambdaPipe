@@ -50,12 +50,10 @@ class JsonHandler:
         self.session["maxlogp"] = 7
         self.session["maxrotbonds"] = 7
 
-        self.new_sessions_list.append(self.session)
-
     @staticmethod
-    def _generate_points_list(sphere_list: list):
+    def _generate_points_list(sphere_tuple: tuple):
         points = []
-        for sphere in sphere_list:
+        for sphere in sphere_tuple:
             point = {
                 "name": sphere.interaction_type,
                 "hasvec": False,
@@ -76,11 +74,10 @@ class JsonHandler:
             points.append(point)
         return points
 
-    def write_points(self, sphere_list: list, number_configs: int):
-
-        for i in range(number_configs):
+    def write_points(self, sphere_list: list):
+        for sphere_tuple in sphere_list:
             new_session = self.session.copy()
-            new_session["points"] = self._generate_points_list(sphere_list[i])
+            new_session["points"] = self._generate_points_list(sphere_tuple)
             self.new_sessions_list.append(new_session)
 
     def create_json(self):
@@ -89,6 +86,6 @@ class JsonHandler:
         for index, new_session in enumerate(self.new_sessions_list):
             modified_json_path = f"{self.output_file_path}/new_session{index+1}.json"
             with open(modified_json_path, 'w') as file:
-                json.dump(self.session, file)
+                json.dump(new_session, file)
             modified_json_path_list.append(modified_json_path)
         return modified_json_path_list
