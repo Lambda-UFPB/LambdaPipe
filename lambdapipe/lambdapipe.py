@@ -17,7 +17,7 @@ from sdf_processor import SdfProcessor
 from admet_request import run_admet_request
 from admet_analyzer import AdmetAnalyzer
 from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
-                   get_absolute_path, merge_csv)
+                   get_absolute_path, write_stats, merge_csv)
 import time
 
 
@@ -30,8 +30,9 @@ import time
 @click.option("-p", "--pharma", is_flag=True, help="Prompt the user for additional input")
 @click.option("-s", "--session", type=str, help="Session file for pharmit search")
 @click.option("--plip_csv", type=str, help="PLIP csv file for optimized pharmit search")
+@click.option("-f", "--fast", is_flag=True, help="Perform all the databases search in the same browser window")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
-def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv, output):
+def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv, fast, output):
     if (not session and (not receptor_file or not ligand_file)) or (session and (receptor_file or ligand_file)):
         raise click.BadParameter(
             "You must provide either a session or both a receptor file and a ligand file.")
@@ -41,7 +42,12 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
 
     start_time = time.time()
     folder_name = output if output else generate_folder_name()
-    output_folder_path, admet_folder, old_download_list = create_folder(folder_name)
+    try:
+        output_folder_path, admet_folder, old_download_list = create_folder(folder_name)
+    except FileExistsError:
+        click.echo(f"The folder {folder_name} already exists. Please provide a different name.")
+        return
+    pharmacophore_number = None
     if session:
         phc = PharmitControl('', '', output_folder_path)
         new_session = session
@@ -51,23 +57,35 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
         if pharma:
             pharmacophore_selection_menu(jsh)
             new_session = [jsh.create_json()]
+
         elif plip_csv:
             popt = PharmaOptimizer(jsh.session, plip_csv)
             pharmit_spheres_list = popt.run_pharma_optimizer()
             configs_list = run_feature_configs(pharmit_spheres_list)
-            jsh.write_points(configs_list)
-            new_session = jsh.create_json(return_list=True)
+            new_session = []
+            for index, config in enumerate(configs_list):
+                jsh.write_points(config)
+                new = jsh.create_json(file_index=index+1)
+                new_session.append(new)
+                pharmacophore_number = len(jsh.session["points"])
         else:
             new_session = [jsh.create_json()]
 
-    exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time)
+    exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
+                        pharmacophore_number, fast)
 
 
-def exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time):
+def exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
+                        pharmacophore_number, fast=False):
     minimize_count = 0
-    for session in reversed(new_session):
-        click.echo("Starting pharmit search...")
-        minimize_count += phc.run_pharmit_search(session)
+    for index, session in enumerate(reversed(new_session)):
+        if index > 1:
+            break
+        click.echo(f"Starting pharmit search of config {index + 1}")
+        if pharmacophore_number:
+            write_stats(f"Results with {pharmacophore_number} pharmacophores:\n", output_folder_path)
+            pharmacophore_number -= 1
+        minimize_count += phc.run_pharmit_search(session, fast)
 
     click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, rmsd)

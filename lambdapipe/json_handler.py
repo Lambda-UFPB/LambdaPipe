@@ -14,7 +14,6 @@ class JsonHandler:
         else:
             self.session = self.load_json()
         self._pharma_set_parameters()
-        self.new_sessions_list = []
 
     def __str__(self):
         pharma_string = ""
@@ -41,7 +40,7 @@ class JsonHandler:
         check_session(session)
         return session
 
-    def _pharma_switch(self, switch_number: int):
+    def pharma_switch(self, switch_number: int):
         button = self.session["points"][switch_number-1]
         button["enabled"] = not button["enabled"]
 
@@ -75,23 +74,13 @@ class JsonHandler:
             points.append(point)
         return points
 
-    def write_points(self, sphere_list: list):
-        for sphere_tuple in sphere_list:
-            new_session = self.session.copy()
-            new_session["points"] = self._generate_points_list(sphere_tuple)
-            self.new_sessions_list.append(new_session)
+    def write_points(self, sphere_tuple: tuple):
+        self.session["points"] = self._generate_points_list(sphere_tuple)
 
-    def create_json(self, return_list=False):
-        modified_json_path_list = []
-        if return_list:
-            for index, new_session in enumerate(self.new_sessions_list):
-                modified_json_path = f"{self.output_file_path}/new_session{index+1}.json"
-                with open(modified_json_path, 'w') as file:
-                    json.dump(new_session, file)
-                modified_json_path_list.append(modified_json_path)
-            return modified_json_path_list
-        else:
-            modified_json_path = f"{self.output_file_path}/new_session.json"
-            with open(modified_json_path, 'w') as file:
-                json.dump(self.session, file)
-            return modified_json_path
+    def create_json(self, file_index: int = None):
+        if file_index is None:
+            file_index = ''
+        modified_json_path = f"{self.output_file_path}/new_session{file_index}.json"
+        with open(modified_json_path, 'w') as file:
+            json.dump(self.session, file)
+        return modified_json_path

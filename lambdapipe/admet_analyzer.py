@@ -1,4 +1,5 @@
 from utils import *
+from exceptions import NoMoleculeError
 
 
 class AdmetAnalyzer:
@@ -15,17 +16,20 @@ class AdmetAnalyzer:
     def _filter_toxicity(self):
         first_column = self.admet_df.iloc[:, 0]
         lipinski = self.admet_df.loc[:, 'Lipinski']
-        columns_27_to_38 = self.admet_df.iloc[:, 27:38]
+        toxicity = self.admet_df.iloc[:, 27:38]
+        tox_21pathway = self.admet_df.iloc[:, 42:54]
 
-        self.admet_df = pd.concat([first_column, columns_27_to_38, lipinski], axis=1)
+        self.admet_df = pd.concat([first_column, toxicity, tox_21pathway, lipinski], axis=1)
 
     def _filter_conditions(self):
-        condition1 = (self.admet_df.select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 3
-        condition2 = self.admet_df['Lipinski'] == 'Accepted'
+        condition1 = (self.admet_df.iloc[:, 27:38].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 3
+        condition2 = (self.admet_df.iloc[:, 42:54].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 3
         condition3 = self.admet_df['Respiratory'] <= 0.3
         combined_condition = condition1 & condition2 & condition3
 
         self.admet_df = self.admet_df[combined_condition]
+        if self.admet_df.empty:
+            raise NoMoleculeError("No molecules passed the admet filter")
 
     def _get_molecule_id(self):
         mol_ids = []
@@ -44,8 +48,8 @@ class AdmetAnalyzer:
                 if molecule_id == key:
                     score.append(value['score'])
                     rmsd.append(value['rmsd'])
-        self.admet_df['Score'] = score
-        self.admet_df['RMSD'] = rmsd
+        self.admet_df['Score Pharmit'] = score
+        self.admet_df['RMSD Pharmit'] = rmsd
         cols = ['Molecule ID'] + [col for col in self.admet_df if col != 'Molecule ID']
         self.admet_df = self.admet_df[cols]
 
@@ -75,10 +79,12 @@ class AdmetAnalyzer:
         self._filter_conditions()
         self._get_molecule_id()
         self._get_score_and_rmsd()
+        """
         category_df = self.admet_df.select_dtypes(include=['float64']).map(AdmetAnalyzer._generate_category_df)
         for column in category_df.columns:
             self.admet_df[column] = self.admet_df[column].astype(object)
         self.admet_df.update(category_df)
+        """
         best_score = self.admet_df['Score'].min()
         num_molecules = self.admet_df.shape[0]
         write_stats(f"\nNumber of molecules after admet filter: {num_molecules}\n"

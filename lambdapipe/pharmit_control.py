@@ -5,6 +5,7 @@ from selenium.common.exceptions import WebDriverException, NoSuchElementExceptio
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from utils import *
+from exceptions import InvalidInputError
 
 
 class PharmitControl:
@@ -15,10 +16,12 @@ class PharmitControl:
         self.ligand_path = ligand_path
         self.total_hits = 0
         options = Options()
-        options.add_experimental_option('detach', True)
+        options.add_argument("--window-size=800,600")
+        options.add_argument("--window-position=1000,0")
         self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
                         ['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
-        chrome_options = Options()
+
+        chrome_options = options
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
             try:
@@ -51,14 +54,14 @@ class PharmitControl:
         # MODIFICAR ISSO AQUI
         try:
             # Upload receptor
-            receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
-            receptor.send_keys(self.receptor_path)
+            load_receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
+            load_receptor.send_keys(self.receptor_path)
             time.sleep(3)
             # Upload ligand
-            ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
-            ligand.send_keys(self.ligand_path)
+            load_ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
+            load_ligand.send_keys(self.ligand_path)
         except WebDriverException:
-            print("Error uploading files. Please check the paths and try again.")
+            raise InvalidInputError("Error uploading files. Please check the path and file name and try again.")
 
     def get_json(self):
         # Download first json
@@ -95,10 +98,12 @@ class PharmitControl:
         search_count = 0
         searched_dbs = []
         while True:
-            if search_count == 5:
+            print(search_count)
+            if search_count == len(db_half):
                 break
             for n, db in enumerate(db_half):
                 if db in searched_dbs:
+                    print("JÁ FEZ")
                     continue
                 time.sleep(3)
                 self.driver.switch_to.window(f"{self.db_list[0][n]}")
@@ -156,9 +161,11 @@ class PharmitControl:
         proceed = False
         downloaded_dbs = []
         while True:
+            print("COMEÇOU O DOWNLOAD LOOP 1")
             if proceed:
                 break
             for n, db in enumerate(db_half):
+                print("COMEÇOU O DOWNLOAD LOOP 2")
                 if len(downloaded_dbs) == len(db_half):
                     proceed = True
                     break
@@ -193,8 +200,16 @@ class PharmitControl:
                 time.sleep(2)
         return True
 
-    def run_pharmit_search(self, modified_json_path):
-        old_download_list = get_download_list('minimized_results*')
+    def _run_fast(self, modified_json_path):
+        for index, db in enumerate(self.db_list[0]):
+            self._open_tab(index, db)
+            self._upload_json(db, modified_json_path)
+            self._change_db(0, index, db)
+            self._search()
+        self._search_loop(0, self.db_list[0])
+        self._download_loop(self.db_list[0])
+
+    def _run_slow(self, modified_json_path):
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
                 if run == 0:
@@ -205,8 +220,27 @@ class PharmitControl:
             self._search_loop(run, db_half)
             self._download_loop(db_half)
 
+    def run_pharmit_search(self, modified_json_path, fast=False):
+        old_download_list = get_download_list('minimized_results*')
+        if fast:
+            self.db_list[1].remove('pubchem')
+            self.db_list = [self.db_list[0] + self.db_list[1]]
+            self._run_fast(modified_json_path)
+        else:
+            self._run_slow(modified_json_path)
+
         if PharmitControl.check_finished_download(self.minimize_count, old_download_list):
             self.driver.quit()
             write_stats(f"\nTotal hits: {self.total_hits}", self.output_folder_path)
 
             return self.minimize_count
+
+
+if __name__ == '__main__':
+    modified_json_path = '/home/kdunorat/lambdapipe_results/testeateofimfast/new_session3.json'
+    output_path = '/home/kdunorat/lambdapipe_results/testeateofimfast'
+    receptor_path = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1.pdbqt'
+    ligand_path = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1-pocket3-remdesivir-cid76325302.pdbqt'
+    phc = PharmitControl(receptor_path, ligand_path, output_path)
+    phc.upload_complex()
+    minimize_c = phc.run_pharmit_search(modified_json_path, fast=False)

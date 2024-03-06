@@ -56,7 +56,7 @@ def create_folders(folder_name: str):
             os.makedirs(path, exist_ok=True)
 
         else:
-            raise FileExistsError(f"{output_folder_path} already exists")
+            raise FileExistsError()
 
     return output_folder_path
 
