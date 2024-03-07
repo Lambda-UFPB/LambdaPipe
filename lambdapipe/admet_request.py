@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 from concurrent.futures import ThreadPoolExecutor
+from sdf_processor import SdfProcessor
 
 
 def get_smiles_string(best_molecules_dict: dict):
@@ -58,3 +59,7 @@ def run_admet_request(best_molecules_dict: dict, output_folder_path: str):
             download(path, csv, output_folder_path)
 
     return dict_smiles_list
+
+
+if __name__ == "__main__":
+    pass

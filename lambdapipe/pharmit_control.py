@@ -17,13 +17,13 @@ class PharmitControl:
         self.total_hits = 0
         self.no_results = []
         options = Options()
-        options.add_argument("--window-size=800,600")
-        options.add_argument("--window-position=1000,0")
+        #options.add_argument("--window-size=800,600")
+        #options.add_argument("--window-position=1000,0")
+        #options.add_experimental_option('detach', True)
         #self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
                         #['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
-        self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport'],
-                        ['pubchem', 'wuxi-lab', 'zinc']]
-
+        self.db_list = [['chembl',],
+                        ['nsc', 'pubchem']]
         chrome_options = options
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -47,6 +47,7 @@ class PharmitControl:
             pass
 
     def _close_tab(self, tab):
+        time.sleep(1)
         self.driver.switch_to.window(tab)
         self.driver.close()
 
@@ -63,6 +64,7 @@ class PharmitControl:
             # Upload ligand
             load_ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
             load_ligand.send_keys(self.ligand_path)
+            #self.driver.quit()
         except WebDriverException:
             raise InvalidInputError("Error uploading files. Please check the path and file name and try again.")
 
@@ -166,7 +168,6 @@ class PharmitControl:
     def _download_loop(self, db_half: list, fast=False):
         proceed = False
         downloaded_dbs = []
-        closed_dbs = []
         last = False
         while True:
             if proceed:
@@ -175,13 +176,7 @@ class PharmitControl:
                 if len(downloaded_dbs) == len(db_half):
                     proceed = True
                     break
-                if db in closed_dbs:
-                    continue
                 if db in downloaded_dbs:
-                    if fast:
-                        time.sleep(1)
-                        self._close_tab(f"{self.db_list[0][n]}")
-                        closed_dbs.append(db)
                     continue
                 if db in self.no_results:
                     downloaded_dbs.append(db)
@@ -190,7 +185,12 @@ class PharmitControl:
                     if len(db_half) - len(downloaded_dbs) == 1:
                         last = True
                 time.sleep(5)
-                save_button = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[3]/div[3]/div[2]/button')
+                try:
+                    save_button = self.driver.find_element(By.XPATH,
+                                                           '/html/body/div[1]/div[1]/div[3]/div[3]/div[2]/button')
+                except WebDriverException:
+                    self.driver.switch_to.window(f"{self.db_list[0][n]}")
+                    continue
                 if save_button.is_enabled():
                     self.download(save_button, db)
                     downloaded_dbs.append(db)
@@ -207,14 +207,20 @@ class PharmitControl:
         self.minimize_count += 1
 
     @staticmethod
-    def check_finished_download(counter, old_download_list):
+    def check_finished_download(minimized_count, old_download_list):
         while True:
+            unfinished = 0
             new_download_list = get_download_list('minimized_results*')
-            all_downloads = len(new_download_list) - len(old_download_list)
-            if all_downloads >= counter:
-                break
-            else:
-                time.sleep(2)
+            for download in new_download_list:
+                if 'crdownload' in download:
+                    unfinished += 1
+                    continue
+            if unfinished == 0:
+                all_downloads = len(new_download_list) - len(old_download_list)
+                if all_downloads >= minimized_count:
+                    break
+                else:
+                    time.sleep(2)
         return True
 
     def _run_fast(self, modified_json_path):
@@ -251,7 +257,7 @@ class PharmitControl:
             self.driver.quit()
             write_stats(f"\nTotal hits: {self.total_hits}", self.output_folder_path)
 
-            return self.minimize_count
+        return self.minimize_count
 
 
 if __name__ == '__main__':
