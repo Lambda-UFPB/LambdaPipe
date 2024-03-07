@@ -92,17 +92,22 @@ def get_download_list(file_pattern: str):
     download_directory_path = os.popen(cmd_1).read()
     download_directory_path = download_directory_path.replace("\n", "")
     download_list = glob.glob(os.path.join(download_directory_path, file_pattern))
+    download_list.reverse()
     return download_list
 
 
-def get_last_files(file_pattern: str, old_download_list: list = None, minimize_count: int = None):
+def get_last_files(file_pattern: str, old_download_list: list = None, minimize_count: int = None, check_download = False):
     most_recent = ''
+    still_downloading = True
     if not old_download_list:
         old_download_list = []
     while True:
         download_list = get_download_list(file_pattern)
         # Filter out files that are still being downloaded or do not exist
-        download_list = [f for f in download_list if os.path.isfile(f) and not f.endswith('.crdownload')]
+        if not check_download:
+            download_list = [f for f in download_list if os.path.isfile(f) and not f.endswith('.crdownload')]
+        else:
+            download_list = [f for f in download_list if os.path.isfile(f) and f not in old_download_list]
         download_list.sort(key=os.path.getmtime, reverse=True)
         if len(download_list) > len(old_download_list) and file_pattern == 'pharmit*.json*':
             try:
@@ -116,7 +121,9 @@ def get_last_files(file_pattern: str, old_download_list: list = None, minimize_c
             break
 
     return most_recent
-     
+
+def check_downloads_complete(download_list: list):
+    return all('crdownload' not in file for file in download_list)
 
 if __name__ == '__main__':
     download_path = get_last_files('pharmit*.json*')

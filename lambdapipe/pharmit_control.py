@@ -24,7 +24,7 @@ class PharmitControl:
                         #['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
         self.db_list = [['chembl',],
                         ['nsc', 'pubchem']]
-        chrome_options = options
+        chrome_options = Options()
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
             try:
@@ -180,6 +180,7 @@ class PharmitControl:
                     continue
                 if db in self.no_results:
                     downloaded_dbs.append(db)
+                    continue
                 if not last and db:
                     self.driver.switch_to.window(f"{self.db_list[0][n]}")
                     if len(db_half) - len(downloaded_dbs) == 1:
@@ -196,10 +197,10 @@ class PharmitControl:
                     downloaded_dbs.append(db)
 
     def download(self, save_button, db):
-        print(f"Downloading {db}")
         time.sleep(1)
         while True:
             try:
+                print(f"Downloading {db}")
                 save_button.click()
                 break
             except WebDriverException:
@@ -209,18 +210,17 @@ class PharmitControl:
     @staticmethod
     def check_finished_download(minimized_count, old_download_list):
         while True:
-            unfinished = 0
-            new_download_list = get_download_list('minimized_results*')
-            for download in new_download_list:
-                if 'crdownload' in download:
-                    unfinished += 1
-                    continue
-            if unfinished == 0:
-                all_downloads = len(new_download_list) - len(old_download_list)
-                if all_downloads >= minimized_count:
-                    break
+            new_download_list = get_last_files('minimized_results*', old_download_list, minimized_count, check_download=True)
+            if not check_downloads_complete(new_download_list):
+                print("teve not download")
+                print(new_download_list)
+                continue
+            else:
+                if len(new_download_list) == minimized_count:
+                    print(new_download_list)
+                    #break
                 else:
-                    time.sleep(2)
+                    time.sleep(1)
         return True
 
     def _run_fast(self, modified_json_path):
