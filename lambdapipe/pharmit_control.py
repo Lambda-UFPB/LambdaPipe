@@ -15,11 +15,14 @@ class PharmitControl:
         self.receptor_path = receptor_path
         self.ligand_path = ligand_path
         self.total_hits = 0
+        self.no_results = []
         options = Options()
         options.add_argument("--window-size=800,600")
         options.add_argument("--window-position=1000,0")
-        self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
-                        ['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
+        #self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
+                        #['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
+        self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport'],
+                        ['pubchem', 'wuxi-lab', 'zinc']]
 
         chrome_options = options
         possible_chrome_binary_locations = get_chrome_binary_path()
@@ -97,20 +100,23 @@ class PharmitControl:
     def _search_loop(self, run: int, db_half: list):
         search_count = 0
         searched_dbs = []
+        last = False
         while True:
-            print(search_count)
             if search_count == len(db_half):
                 break
             for n, db in enumerate(db_half):
                 if db in searched_dbs:
-                    print("JÁ FEZ")
                     continue
                 time.sleep(3)
-                self.driver.switch_to.window(f"{self.db_list[0][n]}")
+                if not last:
+                    self.driver.switch_to.window(f"{self.db_list[0][n]}")
+                    if len(db_half) - search_count == 1:
+                        last = True
                 minimize_button = self.driver.find_element(By.XPATH,
                                                            '//*[@id="pharmit"]/div[1]/div[4]/div[3]/div/button[1]')
                 if self._check_no_results(db):
-                    self.db_list[run].remove(db)
+                    search_count += 1
+                    searched_dbs.append(db)
                 if minimize_button.is_enabled():
                     self._minimize(minimize_button, db)
                     search_count += 1
@@ -120,8 +126,8 @@ class PharmitControl:
         try:
             no_results = self.driver.find_element(By.CLASS_NAME, "dataTables_empty")
             if no_results.text == 'No results found':
-                print("NÃO FEZ")
                 print(f"{no_results.text} in {db}")
+                self.no_results.append(db)
                 return True
         except NoSuchElementException:
             return False
@@ -157,21 +163,32 @@ class PharmitControl:
 
         return number_of_hits
 
-    def _download_loop(self, db_half: list):
+    def _download_loop(self, db_half: list, fast=False):
         proceed = False
         downloaded_dbs = []
+        closed_dbs = []
+        last = False
         while True:
-            print("COMEÇOU O DOWNLOAD LOOP 1")
             if proceed:
                 break
             for n, db in enumerate(db_half):
-                print("COMEÇOU O DOWNLOAD LOOP 2")
                 if len(downloaded_dbs) == len(db_half):
                     proceed = True
                     break
-                if db in downloaded_dbs:
+                if db in closed_dbs:
                     continue
-                self.driver.switch_to.window(f"{self.db_list[0][n]}")
+                if db in downloaded_dbs:
+                    if fast:
+                        time.sleep(1)
+                        self._close_tab(f"{self.db_list[0][n]}")
+                        closed_dbs.append(db)
+                    continue
+                if db in self.no_results:
+                    downloaded_dbs.append(db)
+                if not last and db:
+                    self.driver.switch_to.window(f"{self.db_list[0][n]}")
+                    if len(db_half) - len(downloaded_dbs) == 1:
+                        last = True
                 time.sleep(5)
                 save_button = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[1]/div[3]/div[3]/div[2]/button')
                 if save_button.is_enabled():
@@ -207,11 +224,12 @@ class PharmitControl:
             self._change_db(0, index, db)
             self._search()
         self._search_loop(0, self.db_list[0])
-        self._download_loop(self.db_list[0])
+        self._download_loop(self.db_list[0], fast=True)
 
     def _run_slow(self, modified_json_path):
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
+                print(count)
                 if run == 0:
                     self._open_tab(count, db)
                     self._upload_json(db, modified_json_path)
@@ -237,10 +255,10 @@ class PharmitControl:
 
 
 if __name__ == '__main__':
-    modified_json_path = '/home/kdunorat/lambdapipe_results/testeateofimfast/new_session3.json'
-    output_path = '/home/kdunorat/lambdapipe_results/testeateofimfast'
+    modified_json_path = '/home/kdunorat/lambdapipe_results/testefast/new_session.json'
+    output_path = '/home/kdunorat/lambdapipe_results/testefast'
     receptor_path = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1.pdbqt'
     ligand_path = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1-pocket3-remdesivir-cid76325302.pdbqt'
     phc = PharmitControl(receptor_path, ligand_path, output_path)
     phc.upload_complex()
-    minimize_c = phc.run_pharmit_search(modified_json_path, fast=False)
+    minimize_c = phc.run_pharmit_search(modified_json_path, fast=True)
