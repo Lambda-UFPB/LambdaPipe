@@ -24,7 +24,7 @@ import time
 @click.command()
 @click.argument("receptor_file", type=click.Path(exists=True), required=False)
 @click.argument("ligand_file", type=click.Path(exists=True), required=False)
-@click.option("-t", "--top", type=int, default=100,
+@click.option("-t", "--top", type=int, default=300,
               help="The number of the top molecules by score to search in admetlab 2.0")
 @click.option("-r", "--rmsd", type=float, default=7.0, help="RMSD threshold for filtering the results")
 @click.option("-p", "--pharma", is_flag=True, help="Prompt the user for additional input")
@@ -79,8 +79,6 @@ def exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder,
                         pharmacophore_number, fast=False):
     minimize_count = 0
     for index, session in enumerate(reversed(new_session)):
-        if index > 1:
-            break
         click.echo(f"Starting pharmit search of config {index + 1}")
         if pharmacophore_number:
             write_stats(f"Results with {pharmacophore_number} pharmacophores:\n", output_folder_path)

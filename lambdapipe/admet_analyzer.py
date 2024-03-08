@@ -1,6 +1,6 @@
 from utils import *
 from exceptions import NoMoleculeError
-from admet_request import run_admet_request
+
 
 
 class AdmetAnalyzer:
@@ -51,6 +51,7 @@ class AdmetAnalyzer:
                     rmsd.append(value['rmsd'])
         self.admet_df['Score Pharmit'] = score
         self.admet_df['RMSD Pharmit'] = rmsd
+        self.admet_df['Molecule ID'] = self.admet_df['Molecule ID'].str.split(' ', n=1, expand=True)[0]
         cols = ['Molecule ID'] + [col for col in self.admet_df if col != 'Molecule ID']
         self.admet_df = self.admet_df[cols]
 
@@ -59,33 +60,11 @@ class AdmetAnalyzer:
         best_molecules_df = pd.DataFrame(self.best_molecules_dict).T
         best_molecules_df.to_csv(f'{self.results_path}/best_molecules.csv', index=True)
 
-    @staticmethod
-    def _generate_category_df(parameter_value):
-        categories = {
-            (0.0, 0.1): '---',
-            (0.1, 0.3): '--',
-            (0.3, 0.5): '-',
-            (0.5, 0.7): '+',
-            (0.7, 0.9): '++',
-            (0.9, 1.0): '+++'
-        }
-        for (low, high), category in categories.items():
-            if parameter_value == 0:
-                return '---'
-            if low < parameter_value <= high:
-                return category
-
     def run_admet_analyzer(self):
         self._filter_toxicity()
         self._filter_conditions()
         self._get_molecule_id()
         self._get_score_and_rmsd()
-        """
-        category_df = self.admet_df.select_dtypes(include=['float64']).map(AdmetAnalyzer._generate_category_df)
-        for column in category_df.columns:
-            self.admet_df[column] = self.admet_df[column].astype(object)
-        self.admet_df.update(category_df)
-        """
         best_score = self.admet_df['Score Pharmit'].min()
         num_molecules = self.admet_df.shape[0]
         write_stats(f"\nNumber of molecules after admet filter: {num_molecules}\n"

@@ -244,7 +244,7 @@ class PharmitControl:
     def run_pharmit_search(self, modified_json_path, fast=False):
         old_download_list = get_download_list('minimized_results*')
         if fast:
-            self.db_list[1].remove('pubchem')
+            #self.db_list[1].remove('pubchem')
             self.db_list = [self.db_list[0] + self.db_list[1]]
             self._run_fast(modified_json_path)
         else:
