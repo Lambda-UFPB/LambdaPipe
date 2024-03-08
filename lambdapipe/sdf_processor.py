@@ -12,6 +12,7 @@ class SdfProcessor:
         self.sdf_files = []
         self.best_molecules = []
         self.analyzed_mol = set()
+        self.smiles_found = []
 
     def __getitem__(self, index):
         return self.best_molecules[index]
@@ -47,9 +48,11 @@ class SdfProcessor:
                 rmsd = float(mol.GetProp("minimizedRMSD"))
                 if self._mol_check(mol_ids_set, score, rmsd):
                     smiles = Chem.MolToSmiles(mol, isomericSmiles=False)
-                    self.best_molecules.append((mol_ids, score, rmsd, smiles))
-                    self.analyzed_mol = self.analyzed_mol.union(mol_ids_set)
-    
+                    if smiles not in self.smiles_found:
+                        self.best_molecules.append((mol_ids, score, rmsd, smiles))
+                        self.analyzed_mol = self.analyzed_mol.union(mol_ids_set)
+                        self.smiles_found.append(smiles)
+
     def _mol_check(self, mol_ids_set: set, score: float, rmsd: float) -> bool:
         """Check if the molecule is already in the analyzed_mol
         set and if it fits the threshold (score < -11 and rmsd < 7)"""
@@ -86,6 +89,6 @@ class SdfProcessor:
 
 
 if __name__ == '__main__':
-    sdf = SdfProcessor(10, 50, "/home/kdunorat/PycharmProjects/LambdaPipe/files/testedefinitivo")
+    sdf = SdfProcessor(9, 300, "/home/kdunorat/lambdapipe_results/5eNQSpIj")
     dict_final = sdf.run_sdfprocessor()
     print(dict_final)

@@ -122,8 +122,10 @@ def get_last_files(file_pattern: str, old_download_list: list = None, minimize_c
 
     return most_recent
 
+
 def check_downloads_complete(download_list: list):
     return all('crdownload' not in file for file in download_list)
+
 
 if __name__ == '__main__':
     download_path = get_last_files('pharmit*.json*')

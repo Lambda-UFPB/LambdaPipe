@@ -20,10 +20,10 @@ class PharmitControl:
         #options.add_argument("--window-size=800,600")
         #options.add_argument("--window-position=1000,0")
         #options.add_experimental_option('detach', True)
-        #self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
-                        #['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
-        self.db_list = [['chembl',],
-                        ['nsc', 'pubchem']]
+        self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
+                        ['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
+        #self.db_list = [['chembl',],
+                        #['nsc', 'pubchem']]
         chrome_options = Options()
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -212,13 +212,10 @@ class PharmitControl:
         while True:
             new_download_list = get_last_files('minimized_results*', old_download_list, minimized_count, check_download=True)
             if not check_downloads_complete(new_download_list):
-                print("teve not download")
-                print(new_download_list)
                 continue
             else:
                 if len(new_download_list) == minimized_count:
-                    print(new_download_list)
-                    #break
+                    break
                 else:
                     time.sleep(1)
         return True
