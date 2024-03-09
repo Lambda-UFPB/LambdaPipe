@@ -1,6 +1,4 @@
-from pharma_optimizer import PharmaOptimizer
 from itertools import combinations
-from json_handler import JsonHandler
 
 
 def get_number_of_configs(spheres_list: list):
@@ -45,17 +43,3 @@ def run_feature_configs(spheres_list: list):
         final_combinations.append(max_tuple)
 
     return final_combinations
-
-
-if __name__ == '__main__':
-    pharmit_json_path = '/home/kdunorat/Projetos/LambdaPipe/files/pharmit (3).json'
-    plip_csv = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1-pocket3-interact.csv'
-    popt = PharmaOptimizer(pharmit_json_path, plip_csv)
-    pharmit_spheres_list = popt.run_pharma_optimizer()
-    configs_list = run_feature_configs(pharmit_spheres_list)
-
-    jsh = JsonHandler(output_file_path='/home/kdunorat/Projetos/LambdaPipe/files', pharmit_json=pharmit_json_path)
-    jsh.write_points(configs_list)
-    jsh.create_json()
-
-

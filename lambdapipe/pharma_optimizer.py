@@ -1,7 +1,6 @@
 import json
 import pandas as pd
 from pharma_sphere import PharmaSphere
-from json_handler import JsonHandler
 
 
 class PharmaOptimizer:
@@ -130,19 +129,20 @@ class PharmaOptimizer:
                                    interaction: str):
         """Creates the sphere in pharmit to interact to the plip sphere"""
         new_spheres = []
-        pharmit_sphere = None
-        first = True
+        new_plip_spheres = []
+        plip_spheres.sort(key=lambda x: x.quantity, reverse=True)
+        for sphere in plip_spheres:
+            if sphere.quantity not in quantity_analyzed:
+                new_plip_spheres.append(sphere)
+        used_plip_spheres = []
         for q in range(quantity_to_create):
-            for plip_sphere in plip_spheres:
-                if plip_sphere.quantity in quantity_analyzed:
-                    continue
-                if first or plip_sphere.quantity > pharmit_sphere.quantity_matched:
-                    pharmit_sphere = PharmaSphere(plip_sphere.x, plip_sphere.y, plip_sphere.z, 1.0,
-                                                  interaction, False)
-                    pharmit_sphere.quantity_matched = plip_sphere.quantity
-                    first = False
+            plip_sphere = new_plip_spheres[q]
+            if plip_sphere in used_plip_spheres:
+                continue
+            pharmit_sphere = PharmaSphere(plip_sphere.x, plip_sphere.y, plip_sphere.z, 1.0, interaction, False)
+            pharmit_sphere.quantity_matched = plip_sphere.quantity
             new_spheres.append(pharmit_sphere)
-
+            used_plip_spheres.append(plip_sphere)
         return new_spheres
 
     def get_last_pharmit_spheres(self):
@@ -158,14 +158,3 @@ class PharmaOptimizer:
         self._generate_plip_spheres()
         self.analyze_sphere_pairs()
         return self.get_last_pharmit_spheres()
-
-
-if __name__ == '__main__':
-    pharmit_json_path = '/home/kdunorat/Projetos/LambdaPipe/files/pharmit (3).json'
-    plip_csv = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1-pocket3-interact.csv'
-    popt = PharmaOptimizer(pharmit_json_path, plip_csv)
-    pharmit_spheres_list = popt.run_pharma_optimizer()
-    """"""
-    jsh = JsonHandler(output_file_path='/home/kdunorat/Projetos/LambdaPipe/files', pharmit_json=pharmit_json_path)
-    jsh.write_points(pharmit_spheres_list)
-    jsh.create_json()

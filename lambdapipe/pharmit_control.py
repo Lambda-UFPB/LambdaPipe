@@ -16,14 +16,13 @@ class PharmitControl:
         self.ligand_path = ligand_path
         self.total_hits = 0
         self.no_results = []
-        options = Options()
+        #options = Options()
         #options.add_argument("--window-size=800,600")
         #options.add_argument("--window-position=1000,0")
-        #options.add_experimental_option('detach', True)
-        self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
-                        ['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
-        #self.db_list = [['chembl',],
-                        #['nsc', 'pubchem']]
+        #self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
+                        #['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
+        self.db_list = [['enamine',],
+                        ['wuxi-lab', 'zinc']]
         chrome_options = Options()
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -220,16 +219,17 @@ class PharmitControl:
                     time.sleep(1)
         return True
 
-    def _run_fast(self, modified_json_path):
+    def _run_fast(self, modified_json_path, run_lambdapipe):
         for index, db in enumerate(self.db_list[0]):
-            self._open_tab(index, db)
+            if run_lambdapipe == 0:
+                self._open_tab(index, db)
             self._upload_json(db, modified_json_path)
             self._change_db(0, index, db)
             self._search()
         self._search_loop(0, self.db_list[0])
         self._download_loop(self.db_list[0], fast=True)
 
-    def _run_slow(self, modified_json_path):
+    def _run_slow(self, modified_json_path, run_lambdapipe):
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
                 print(count)
@@ -241,17 +241,19 @@ class PharmitControl:
             self._search_loop(run, db_half)
             self._download_loop(db_half)
 
-    def run_pharmit_search(self, modified_json_path, fast=False):
+    def run_pharmit_search(self, modified_json_path, run_lambdapipe, quit_now=False, fast=False):
         old_download_list = get_download_list('minimized_results*')
         if fast:
-            #self.db_list[1].remove('pubchem')
-            self.db_list = [self.db_list[0] + self.db_list[1]]
-            self._run_fast(modified_json_path)
+            if run_lambdapipe == 0:
+                self.db_list = [self.db_list[0] + self.db_list[1]]
+            print(f"Run: {run_lambdapipe}")
+            self._run_fast(modified_json_path, run_lambdapipe)
         else:
-            self._run_slow(modified_json_path)
+            self._run_slow(modified_json_path, run_lambdapipe)
 
         if PharmitControl.check_finished_download(self.minimize_count, old_download_list):
-            self.driver.quit()
+            if quit_now:
+                self.driver.quit()
             write_stats(f"\nTotal hits: {self.total_hits}", self.output_folder_path)
 
         return self.minimize_count

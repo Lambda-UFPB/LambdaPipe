@@ -9,6 +9,8 @@ Email: kdu.norat@gmail.com
 """
 
 import click
+import time
+import asyncio
 from pharmit_control import PharmitControl
 from top_feature_configs import run_feature_configs
 from pharma_optimizer import PharmaOptimizer
@@ -18,7 +20,7 @@ from admet_request import run_admet_request
 from admet_analyzer import AdmetAnalyzer
 from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
                    get_absolute_path, write_stats, merge_csv)
-import time
+
 
 
 @click.command()
@@ -78,19 +80,23 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
 def exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
                         pharmacophore_number, fast=False):
     minimize_count = 0
+    quit_now = False
     for index, session in enumerate(reversed(new_session)):
         click.echo(f"Starting pharmit search of config {index + 1}")
+        if index == len(session) - 1:
+            quit_now = True
         if pharmacophore_number:
             write_stats(f"Results with {pharmacophore_number} pharmacophores:\n", output_folder_path)
             pharmacophore_number -= 1
-        minimize_count += phc.run_pharmit_search(session, fast)
+        minimize_count += phc.run_pharmit_search(session, run_lambdapipe=index, quit_now=quit_now, fast=fast)
+        print(f"minimize count = {minimize_count}")
 
     click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, rmsd)
     dict_final = sdfp.run_sdfprocessor()
 
     click.echo("\nGetting ADMET info...")
-    smiles_list = run_admet_request(dict_final, output_folder_path)
+    smiles_list = asyncio.run(asyncio.wait_for(run_admet_request(dict_final, output_folder_path), timeout=1200))
     merge_csv(admet_folder)
 
     click.echo("\nGenerating final results...")
