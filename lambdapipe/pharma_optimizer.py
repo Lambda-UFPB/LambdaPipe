@@ -9,26 +9,25 @@ class PharmaOptimizer:
         self.plip_df = pd.read_csv(plip_csv_path)
         self.mean_quantity = self.plip_df['quantidade'].mean()
         self.spheres_dict = {
-            'Hydrophobic': {'enabled': 0, 'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'Hydrophobic',
+            'Hydrophobic': {'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'Hydrophobic',
                             'pharmit_final_size': 0},
-            'HydrogenDonor': {'enabled': 0, 'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'HydrogenAcceptor',
+            'HydrogenDonor': {'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'HydrogenAcceptor',
                               'pharmit_final_size': 0},
-            'HydrogenAcceptor': {'enabled': 0, 'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'HydrogenDonor',
+            'HydrogenAcceptor': {'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'HydrogenDonor',
                                  'pharmit_final_size': 0},
-            'PositiveIon': {'enabled': 0, 'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'NegativeIon',
+            'PositiveIon': {'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'NegativeIon',
                             'pharmit_final_size': 0},
-            'NegativeIon': {'enabled': 0, 'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'PositiveIon',
+            'NegativeIon': {'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'PositiveIon',
                             'pharmit_final_size': 0}
         }
         self.pharmit_spheres_type_available = []
+        self.spheres_in_interaction_limit = 0
 
     def _generate_pharmit_spheres(self):
         pharmit_spheres_type_available = []
         for feature in self.pharmit_session['points']:
             if feature['name'] == 'InclusionSphere' or feature['name'] == 'Aromatic':
                 continue
-            if feature['enabled']:
-                self.spheres_dict[feature['name']]['enabled'] += 1
 
             is_donor = self._check_donor(pharmit_feature=feature)
 
@@ -49,6 +48,14 @@ class PharmaOptimizer:
                                                is_donor, index=index)
                     plip_sphere.quantity = row['quantidade']
                     self.spheres_dict[plip_interaction_type]['plip_spheres'].append(plip_sphere)
+
+    def _get_pharmacophore_limit(self):
+        plip_sphere_size = []
+        for dicti in self.spheres_dict.values():
+            if len(dicti['plip_spheres']) == 0:
+                continue
+            plip_sphere_size.append(len(dicti['plip_spheres']))
+        self.spheres_in_interaction_limit = min(plip_sphere_size)
 
     @staticmethod
     def _check_donor(pharmit_feature: dict = None, plip_row: pd.Series = None):
@@ -110,19 +117,15 @@ class PharmaOptimizer:
             plip_opp_list = self.spheres_dict[opposite]['plip_spheres']
             if not dicti['pharmit_spheres']:
                 continue
-            if dicti['enabled'] > 0:
-                if len(dicti['pharmit_spheres']) < dicti['enabled']:
-                    quantity_to_create = dicti['enabled'] - len(dicti['pharmit_spheres'])
-                    quantity_analyzed = [x.quantity_matched for x in dicti['pharmit_spheres']]
-                    final_spheres = self._create_interaction_sphere(plip_opp_list, quantity_to_create,
-                                                                    quantity_analyzed, key)
-                    dicti['pharmit_spheres'] += final_spheres
-                elif len(dicti['pharmit_spheres']) > dicti['enabled']:
-                    dicti['pharmit_spheres'].sort(key=lambda x: x.quantity_matched, reverse=True)
-                    dicti['pharmit_spheres'] = dicti['pharmit_spheres'][:dicti['enabled']]
-            if dicti['enabled'] == 0:
+
+            if len(dicti['pharmit_spheres']) < self.spheres_in_interaction_limit:
+                quantity_to_create = self.spheres_in_interaction_limit - len(dicti['pharmit_spheres'])
+                quantity_analyzed = [x.quantity_matched for x in dicti['pharmit_spheres']]
+                final_spheres = self._create_interaction_sphere(plip_opp_list, quantity_to_create, quantity_analyzed, key)
+                dicti['pharmit_spheres'] += final_spheres
+            elif len(dicti['pharmit_spheres']) > self.spheres_in_interaction_limit:
                 dicti['pharmit_spheres'].sort(key=lambda x: x.quantity_matched, reverse=True)
-                dicti['pharmit_spheres'] = [dicti['pharmit_spheres'][0]]
+                dicti['pharmit_spheres'] = dicti['pharmit_spheres'][:self.spheres_in_interaction_limit]
 
     @staticmethod
     def _create_interaction_sphere(plip_spheres: list, quantity_to_create: int, quantity_analyzed: list,
@@ -145,16 +148,23 @@ class PharmaOptimizer:
             used_plip_spheres.append(plip_sphere)
         return new_spheres
 
+    def increase_hydrogen_quantity(self, factor):
+        for pharmit_sphere in self.spheres_dict['HydrogenDonor']['pharmit_spheres']:
+            pharmit_sphere.quantity_matched *= factor
+        for pharmit_sphere in self.spheres_dict['HydrogenAcceptor']['pharmit_spheres']:
+            pharmit_sphere.quantity_matched *= factor
+
     def get_last_pharmit_spheres(self):
         last_pharmit_spheres = []
         for key, dicti in self.spheres_dict.items():
             last_pharmit_spheres += dicti['pharmit_spheres']
-        if len(last_pharmit_spheres) > 6:
-            last_pharmit_spheres = last_pharmit_spheres[:6]
+
         return last_pharmit_spheres
 
     def run_pharma_optimizer(self):
         self._generate_pharmit_spheres()
         self._generate_plip_spheres()
+        self._get_pharmacophore_limit()
         self.analyze_sphere_pairs()
+        self.increase_hydrogen_quantity(1.5)
         return self.get_last_pharmit_spheres()

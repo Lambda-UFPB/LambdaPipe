@@ -3,11 +3,14 @@ from itertools import combinations
 
 def get_number_of_configs(spheres_list: list):
     """Number of configs"""
-    configs = len(spheres_list) - 3
-    if configs == 0:
-        number_configs = 1
+    if len(spheres_list) > 5:
+        number_configs = 3
     else:
-        number_configs = configs + 1
+        configs = len(spheres_list) - 3
+        if configs == 0:
+            number_configs = 1
+        else:
+            number_configs = configs + 1
     return number_configs
 
 

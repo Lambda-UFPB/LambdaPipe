@@ -18,6 +18,7 @@ from json_handler import JsonHandler
 from sdf_processor import SdfProcessor
 from admet_request import run_admet_request
 from admet_analyzer import AdmetAnalyzer
+from get_html import results_to_html
 from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
                    get_absolute_path, write_stats, merge_csv)
 
@@ -73,11 +74,11 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
         else:
             new_session = [jsh.create_json()]
 
-    exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
+    exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
                         pharmacophore_number, fast)
 
 
-def exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
+def exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
                         pharmacophore_number, fast=False):
     minimize_count = 0
     quit_now = False
@@ -85,11 +86,14 @@ def exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder,
         click.echo(f"Starting pharmit search of config {index + 1}")
         if index == len(session) - 1:
             quit_now = True
+        print(f"quit_now = {quit_now}")
         if pharmacophore_number:
             write_stats(f"Results with {pharmacophore_number} pharmacophores:\n", output_folder_path)
             pharmacophore_number -= 1
         minimize_count += phc.run_pharmit_search(session, run_lambdapipe=index, quit_now=quit_now, fast=fast)
         print(f"minimize count = {minimize_count}")
+        phc.no_results = []
+        phc.minimize_count = 0
 
     click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, rmsd)
@@ -102,9 +106,11 @@ def exec_pharmit_search(new_session, phc, top, output_folder_path, admet_folder,
     click.echo("\nGenerating final results...")
     analyzer = AdmetAnalyzer(output_folder_path, admet_folder, dict_final, smiles_list)
     analyzer.run_admet_analyzer()
-    click.echo(f"\nGo to the {folder_name} directory in files to see the final results")
+    results_to_html(output_folder_path, folder_name)
+
+    click.echo(f"\nGo to {output_folder_path} to see the final results")
     elapsed_time = time.time()
-    click.echo(f"Analysis Completed\n{(elapsed_time - start_time)/60:.2f} minutes")
+    click.echo(f"\n\nAnalysis Completed\n{(elapsed_time - start_time)/60:.2f} minutes")
 
 
 def create_folder(folder_name):

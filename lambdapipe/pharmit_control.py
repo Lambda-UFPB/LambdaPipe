@@ -16,13 +16,11 @@ class PharmitControl:
         self.ligand_path = ligand_path
         self.total_hits = 0
         self.no_results = []
-        #options = Options()
-        #options.add_argument("--window-size=800,600")
-        #options.add_argument("--window-position=1000,0")
+
         #self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
                         #['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
-        self.db_list = [['enamine',],
-                        ['wuxi-lab', 'zinc']]
+        self.db_list = [['wuxi-lab',],
+                        ['nsc']]
         chrome_options = Options()
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -54,7 +52,6 @@ class PharmitControl:
         # Get page
         self.driver.get("https://pharmit.csb.pitt.edu/search.html")
         self.driver.implicitly_wait(3)
-        # MODIFICAR ISSO AQUI
         try:
             # Upload receptor
             load_receptor = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[1]/input')
@@ -63,7 +60,6 @@ class PharmitControl:
             # Upload ligand
             load_ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
             load_ligand.send_keys(self.ligand_path)
-            #self.driver.quit()
         except WebDriverException:
             raise InvalidInputError("Error uploading files. Please check the path and file name and try again.")
 
@@ -119,6 +115,8 @@ class PharmitControl:
                     search_count += 1
                     searched_dbs.append(db)
                 if minimize_button.is_enabled():
+                    self.driver.switch_to.window(f"{self.db_list[0][n]}")
+                    time.sleep(0.5)
                     self._minimize(minimize_button, db)
                     search_count += 1
                     searched_dbs.append(db)
@@ -192,6 +190,8 @@ class PharmitControl:
                     self.driver.switch_to.window(f"{self.db_list[0][n]}")
                     continue
                 if save_button.is_enabled():
+                    self.driver.switch_to.window(f"{self.db_list[0][n]}")
+                    time.sleep(0.5)
                     self.download(save_button, db)
                     downloaded_dbs.append(db)
 
@@ -216,6 +216,7 @@ class PharmitControl:
                 if len(new_download_list) == minimized_count:
                     break
                 else:
+                    print("PRESO NO LOOP CHECK FINISHED DOWNLOAD")
                     time.sleep(1)
         return True
 
@@ -232,7 +233,6 @@ class PharmitControl:
     def _run_slow(self, modified_json_path, run_lambdapipe):
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
-                print(count)
                 if run == 0:
                     self._open_tab(count, db)
                     self._upload_json(db, modified_json_path)
@@ -254,7 +254,7 @@ class PharmitControl:
         if PharmitControl.check_finished_download(self.minimize_count, old_download_list):
             if quit_now:
                 self.driver.quit()
-            write_stats(f"\nTotal hits: {self.total_hits}", self.output_folder_path)
+                write_stats(f"\nTotal hits: {self.total_hits}", self.output_folder_path)
 
         return self.minimize_count
 
@@ -266,4 +266,4 @@ if __name__ == '__main__':
     ligand_path = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1-pocket3-remdesivir-cid76325302.pdbqt'
     phc = PharmitControl(receptor_path, ligand_path, output_path)
     phc.upload_complex()
-    minimize_c = phc.run_pharmit_search(modified_json_path, fast=True)
+    minimize_c = phc.run_pharmit_search(modified_json_path, fast=True, run_lambdapipe=0)

@@ -89,6 +89,6 @@ class SdfProcessor:
 
 
 if __name__ == '__main__':
-    sdf = SdfProcessor(9, 300, "/home/kdunorat/lambdapipe_results/5eNQSpIj")
+    sdf = SdfProcessor(6, 300, "/home/kdunorat/lambdapipe_results/testeswap")
     dict_final = sdf.run_sdfprocessor()
     print(dict_final)
