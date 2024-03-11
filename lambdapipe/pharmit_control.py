@@ -1,7 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import WebDriverException, NoSuchElementException, NoAlertPresentException
+from selenium.common.exceptions import WebDriverException, NoSuchElementException, NoAlertPresentException, StaleElementReferenceException
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from utils import *
@@ -17,10 +17,10 @@ class PharmitControl:
         self.total_hits = 0
         self.no_results = []
 
-        #self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
-                        #['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
-        self.db_list = [['wuxi-lab',],
-                        ['nsc']]
+        self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
+                        ['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
+        #self.db_list = [['wuxi-lab'],
+                        #['nsc']]
         chrome_options = Options()
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -122,14 +122,19 @@ class PharmitControl:
                     searched_dbs.append(db)
 
     def _check_no_results(self, db):
-        try:
-            no_results = self.driver.find_element(By.CLASS_NAME, "dataTables_empty")
-            if no_results.text == 'No results found':
-                print(f"{no_results.text} in {db}")
-                self.no_results.append(db)
-                return True
-        except NoSuchElementException:
-            return False
+        while True:
+            try:
+                no_results = self.driver.find_element(By.CLASS_NAME, "dataTables_empty")
+                if no_results.text == 'No results found':
+                    print(f"{no_results.text} in {db}")
+                    self.no_results.append(db)
+                    return True
+                else:
+                    return False
+            except NoSuchElementException:
+                return False
+            except StaleElementReferenceException:
+                continue
 
     def _minimize(self, minimize_button, db):
         number_of_hits = self._get_screening_stats()

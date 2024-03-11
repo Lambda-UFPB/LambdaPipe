@@ -86,9 +86,8 @@ def exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rms
         click.echo(f"Starting pharmit search of config {index + 1}")
         if index == len(session) - 1:
             quit_now = True
-        print(f"quit_now = {quit_now}")
         if pharmacophore_number:
-            write_stats(f"Results with {pharmacophore_number} pharmacophores:\n", output_folder_path)
+            write_stats(f"\nResults with {pharmacophore_number} pharmacophores:\n", output_folder_path)
             pharmacophore_number -= 1
         minimize_count += phc.run_pharmit_search(session, run_lambdapipe=index, quit_now=quit_now, fast=fast)
         print(f"minimize count = {minimize_count}")
