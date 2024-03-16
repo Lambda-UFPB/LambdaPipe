@@ -70,30 +70,31 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
                 jsh.write_points(config)
                 new = jsh.create_json(file_index=index+1)
                 new_session.append(new)
-                pharmacophore_number = len(jsh.session["points"])
+                pharmacophore_number = 0
         else:
             new_session = [jsh.create_json()]
 
     exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
-                        pharmacophore_number, fast)
+                    pharmacophore_number, fast)
 
 
 def exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
-                        pharmacophore_number, fast=False):
+                    pharmacophore_number, fast=False):
     minimize_count = 0
     quit_now = False
-    for index, session in enumerate(reversed(new_session)):
+    for index, session in enumerate(new_session):
         click.echo(f"Starting pharmit search of config {index + 1}")
-        if index == len(session) - 1:
+
+        if index == len(new_session) - 1:
             quit_now = True
+
         if pharmacophore_number:
             write_stats(f"\nResults with {pharmacophore_number} pharmacophores:\n", output_folder_path)
-            pharmacophore_number -= 1
+            pharmacophore_number += index
         minimize_count += phc.run_pharmit_search(session, run_lambdapipe=index, quit_now=quit_now, fast=fast)
-        print(f"minimize count = {minimize_count}")
         phc.no_results = []
         phc.minimize_count = 0
-
+    
     click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, rmsd)
     dict_final = sdfp.run_sdfprocessor()

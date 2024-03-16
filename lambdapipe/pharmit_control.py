@@ -1,11 +1,13 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import WebDriverException, NoSuchElementException, NoAlertPresentException, StaleElementReferenceException
+from selenium.common.exceptions import (WebDriverException, NoSuchElementException, NoAlertPresentException,
+                                        StaleElementReferenceException, ElementNotInteractableException)
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from utils import *
 from exceptions import InvalidInputError
+from json_handler import JsonHandler
 
 
 class PharmitControl:
@@ -17,10 +19,11 @@ class PharmitControl:
         self.total_hits = 0
         self.no_results = []
 
-        self.db_list = [['chembl', 'chemdiv', 'enamine', 'molport', 'mcule'],
-                        ['ultimate', 'nsc', 'pubchem', 'wuxi-lab', 'zinc']]
+        self.db_list = [['chembl', 'chemdiv', 'chemspace', 'molport', 'mcule'],
+                        ['ultimate', 'enamine', 'pubchem', 'wuxi-lab', 'zinc']]
         #self.db_list = [['wuxi-lab'],
                         #['nsc']]
+        self.hit_limit = {'chembl': 2, 'chemspace': 2, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 5}
         chrome_options = Options()
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -77,6 +80,19 @@ class PharmitControl:
         database = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[1]/button[1]')
         self.driver.execute_script("arguments[0].setAttribute('value', arguments[1]);", database, db)
 
+    def _hit_reduction(self, db):
+        # Hit reduction
+        if db in self.hit_limit.keys():
+            self.driver.find_element(By.XPATH, '//*[@id="ui-id-7"]').click()
+            for limit in range(self.hit_limit[db]):
+                time.sleep(0.4)
+                while True:
+                    try:
+                        self.driver.find_element(By.XPATH, '//*[@id="ui-id-8"]/table/tbody/tr[1]/td[2]/span/a[1]').click()
+                        break
+                    except ElementNotInteractableException:
+                        pass
+
     def _upload_json(self, db, modified_json_path):
         # Upload session
         self.driver.switch_to.window(f"{db}")
@@ -84,7 +100,7 @@ class PharmitControl:
         load_session.send_keys(modified_json_path)
         time.sleep(3)
 
-    def _search(self):
+    def _search(self, db):
         # Click on the search button
         search = self.driver.find_element(By.XPATH, '//*[@id="pharmitsearchbutton"]')
         while True:
@@ -196,7 +212,7 @@ class PharmitControl:
                     continue
                 if save_button.is_enabled():
                     self.driver.switch_to.window(f"{self.db_list[0][n]}")
-                    time.sleep(0.5)
+                    time.sleep(0.7)
                     self.download(save_button, db)
                     downloaded_dbs.append(db)
 
@@ -229,13 +245,17 @@ class PharmitControl:
         for index, db in enumerate(self.db_list[0]):
             if run_lambdapipe == 0:
                 self._open_tab(index, db)
+            time.sleep(1)
             self._upload_json(db, modified_json_path)
             self._change_db(0, index, db)
-            self._search()
+            if run_lambdapipe == 0:
+                self._hit_reduction(db)
+            time.sleep(1)
+            self._search(db)
         self._search_loop(0, self.db_list[0])
         self._download_loop(self.db_list[0], fast=True)
 
-    def _run_slow(self, modified_json_path, run_lambdapipe):
+    def _run_slow(self, modified_json_path, run_lambdapipe, quit_now):
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
                 if run == 0:

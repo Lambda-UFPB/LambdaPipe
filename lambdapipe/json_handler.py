@@ -4,7 +4,7 @@ from utils import *
 
 class JsonHandler:
 
-    def __init__(self, output_file_path, old_download_list=None, pharmit_json=None):
+    def __init__(self, output_file_path=None, old_download_list=None, pharmit_json=None):
         self.output_file_path = output_file_path
         self.old_download_list = old_download_list
         if pharmit_json:
