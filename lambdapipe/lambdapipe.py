@@ -50,7 +50,7 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
     except FileExistsError:
         click.echo(f"The folder {folder_name} already exists. Please provide a different name.")
         return
-    pharmacophore_number = None
+    pharmacophore_number = False
     if session:
         phc = PharmitControl('', '', output_folder_path)
         new_session = session
@@ -70,7 +70,7 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
                 jsh.write_points(config)
                 new = jsh.create_json(file_index=index+1)
                 new_session.append(new)
-                pharmacophore_number = 0
+                pharmacophore_number = True
         else:
             new_session = [jsh.create_json()]
 
@@ -81,6 +81,7 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
 def exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
                     pharmacophore_number, fast=False):
     minimize_count = 0
+    pharmacophore_number = 3 if pharmacophore_number else pharmacophore_number
     quit_now = False
     for index, session in enumerate(new_session):
         click.echo(f"Starting pharmit search of config {index + 1}")
