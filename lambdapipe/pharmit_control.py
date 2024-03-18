@@ -24,6 +24,7 @@ class PharmitControl:
         #self.db_list = [['wuxi-lab'],
                         #['nsc']]
         self.hit_limit = {'chembl': 2, 'chemspace': 2, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 5}
+        self.big_dbs = ['ultimate', 'chemspace', 'pubchem']
         chrome_options = Options()
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -110,7 +111,7 @@ class PharmitControl:
             except WebDriverException:
                 pass
 
-    def _search_loop(self, run: int, db_half: list):
+    def _search_loop(self, run: int, db_half: list, run_lambdapipe: int):
         search_count = 0
         searched_dbs = []
         last = False
@@ -119,6 +120,10 @@ class PharmitControl:
                 break
             for n, db in enumerate(db_half):
                 if db in searched_dbs:
+                    continue
+                if run_lambdapipe == 0 and db in self.big_dbs:
+                    search_count += 1
+                    searched_dbs.append(db)
                     continue
                 time.sleep(3)
                 if not last:
@@ -183,7 +188,7 @@ class PharmitControl:
 
         return number_of_hits
 
-    def _download_loop(self, db_half: list, fast=False):
+    def _download_loop(self, db_half: list, run_lambdapipe, fast=False):
         proceed = False
         downloaded_dbs = []
         last = False
@@ -195,6 +200,9 @@ class PharmitControl:
                     proceed = True
                     break
                 if db in downloaded_dbs:
+                    continue
+                if run_lambdapipe == 0 and db in self.big_dbs:
+                    downloaded_dbs.append(db)
                     continue
                 if db in self.no_results:
                     downloaded_dbs.append(db)
@@ -252,8 +260,8 @@ class PharmitControl:
                 self._hit_reduction(db)
             time.sleep(1)
             self._search(db)
-        self._search_loop(0, self.db_list[0])
-        self._download_loop(self.db_list[0], fast=True)
+        self._search_loop(0, self.db_list[0], run_lambdapipe)
+        self._download_loop(self.db_list[0], run_lambdapipe, fast=True)
 
     def _run_slow(self, modified_json_path, run_lambdapipe, quit_now):
         for run, db_half in enumerate(self.db_list):
