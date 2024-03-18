@@ -67,7 +67,7 @@ class AdmetAnalyzer:
         self._get_score_and_rmsd()
         best_score = self.admet_df['Score Pharmit'].min()
         num_molecules = self.admet_df.shape[0]
-        write_stats(f"\nNumber of molecules after admet filter: {num_molecules}\n"
+        write_stats(f"\n\nNumber of molecules after admet filter: {num_molecules}\n"
                     f"Best score after admet research: {best_score}", self.output_folder_path)
 
         self.admet_df.to_csv(f'{self.results_path}/admet_filtered.csv', index=False)

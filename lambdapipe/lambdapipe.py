@@ -73,13 +73,14 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
                 pharmacophore_number = True
         else:
             new_session = [jsh.create_json()]
-
-    exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
+    minino = 27
+    exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time, minino,
                     pharmacophore_number, fast)
 
 
-def exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time,
+def exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time, minino,
                     pharmacophore_number, fast=False):
+    """
     minimize_count = 0
     pharmacophore_number = 3 if pharmacophore_number else pharmacophore_number
     quit_now = False
@@ -95,7 +96,8 @@ def exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rms
         minimize_count += phc.run_pharmit_search(session, run_lambdapipe=index, quit_now=quit_now, fast=fast)
         phc.no_results = []
         phc.minimize_count = 0
-    
+    """
+    minimize_count = minino
     click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, rmsd)
     dict_final = sdfp.run_sdfprocessor()

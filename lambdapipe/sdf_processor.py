@@ -73,8 +73,8 @@ class SdfProcessor:
         self._get_sdfs()
         self._process_sdf()
         if self.best_molecules:
-            write_stats(f"\nNumber of molecules after filtering (Score < -11 and RMSD < {self.cli_rmsd}): "
-                              f"{len(self.best_molecules)}", self.output_folder_path)
+            write_stats(f"\n\nNumber of molecules after filtering (Score < -11 and RMSD < {self.cli_rmsd}): "
+                        f"{len(self.best_molecules)}", self.output_folder_path)
             if len(self.best_molecules) > self.top:
                 self._get_top_molecules(self.top)
 
@@ -89,6 +89,6 @@ class SdfProcessor:
 
 
 if __name__ == '__main__':
-    sdf = SdfProcessor(20, 500, "/home/kdunorat/lambdapipe_results/testefinal")
+    sdf = SdfProcessor(20, 800, "/home/kdunorat/lambdapipe_results/testefinal")
     dict_final = sdf.run_sdfprocessor()
     print(dict_final)
