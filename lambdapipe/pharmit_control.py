@@ -7,7 +7,6 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from utils import *
 from exceptions import InvalidInputError
-from json_handler import JsonHandler
 
 
 class PharmitControl:
@@ -21,10 +20,11 @@ class PharmitControl:
 
         self.db_list = [['chembl', 'chemdiv', 'chemspace', 'molport', 'mcule'],
                         ['ultimate', 'enamine', 'pubchem', 'wuxi-lab', 'zinc']]
-        #self.db_list = [['wuxi-lab'],
+        #self.db_list = [['zinc', 'wuxi-lab'],
                         #['nsc']]
         self.hit_limit = {'chembl': 2, 'chemspace': 2, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 5}
-        self.big_dbs = ['ultimate', 'chemspace', 'pubchem']
+        self.big_dbs = ['chemspace', 'pubchem']
+        #self.hit_limit = {'zinc': 5}
         chrome_options = Options()
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -99,7 +99,12 @@ class PharmitControl:
         self.driver.switch_to.window(f"{db}")
         load_session = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/div/input')
         load_session.send_keys(modified_json_path)
-        time.sleep(3)
+        while True:
+            try:
+                self.driver.find_element(By.XPATH, '//*[@class="pharmit_featurediv pharmit_enabledfeature"]')
+                break
+            except NoSuchElementException:
+                pass
 
     def _search(self, db):
         # Click on the search button
@@ -107,8 +112,15 @@ class PharmitControl:
         while True:
             try:
                 search.click()
+                time.sleep(1)
                 break
             except WebDriverException:
+                pass
+        while True:
+            try:
+                self.driver.find_element(By.XPATH, '//*[@class="pharmit_heading pharmit_rightheading"]')
+                break
+            except NoSuchElementException:
                 pass
 
     def _search_loop(self, run: int, db_half: list, run_lambdapipe: int):
@@ -245,7 +257,6 @@ class PharmitControl:
                 if len(new_download_list) == minimized_count:
                     break
                 else:
-                    print("PRESO NO LOOP CHECK FINISHED DOWNLOAD")
                     time.sleep(1)
         return True
 
@@ -263,23 +274,22 @@ class PharmitControl:
         self._search_loop(0, self.db_list[0], run_lambdapipe)
         self._download_loop(self.db_list[0], run_lambdapipe, fast=True)
 
-    def _run_slow(self, modified_json_path, run_lambdapipe, quit_now):
+    def _run_slow(self, modified_json_path, run_lambdapipe):
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
                 if run == 0:
                     self._open_tab(count, db)
                     self._upload_json(db, modified_json_path)
                 self._change_db(run, count, db)
-                self._search()
-            self._search_loop(run, db_half)
-            self._download_loop(db_half)
+                self._search(db)
+            self._search_loop(run, db_half, run_lambdapipe)
+            self._download_loop(db_half, run_lambdapipe, fast=False)
 
     def run_pharmit_search(self, modified_json_path, run_lambdapipe, quit_now=False, fast=False):
         old_download_list = get_download_list('minimized_results*')
         if fast:
             if run_lambdapipe == 0:
                 self.db_list = [self.db_list[0] + self.db_list[1]]
-            print(f"Run: {run_lambdapipe}")
             self._run_fast(modified_json_path, run_lambdapipe)
         else:
             self._run_slow(modified_json_path, run_lambdapipe)
@@ -290,13 +300,3 @@ class PharmitControl:
                 write_stats(f"\nTotal hits: {self.total_hits}", self.output_folder_path)
 
         return self.minimize_count
-
-
-if __name__ == '__main__':
-    modified_json_path = '/home/kdunorat/lambdapipe_results/testefast/new_session.json'
-    output_path = '/home/kdunorat/lambdapipe_results/testefast'
-    receptor_path = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1.pdbqt'
-    ligand_path = '/home/kdunorat/Projetos/LambdaPipe/files/7KR1-pocket3-remdesivir-cid76325302.pdbqt'
-    phc = PharmitControl(receptor_path, ligand_path, output_path)
-    phc.upload_complex()
-    minimize_c = phc.run_pharmit_search(modified_json_path, fast=True, run_lambdapipe=0)
