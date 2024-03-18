@@ -12,11 +12,13 @@ def get_df_html(df_html_old: pd.DataFrame):
     lipinski = df_html_old.loc[:, 'Lipinski']
     toxicity = df_html_old.iloc[:, 2:13]
     df_html = pd.concat([first_column, toxicity, lipinski], axis=1)
-    df_html['green_count'] = (df_html.select_dtypes(include='float') <= 0.3).sum(axis=1)
+    df_html['mean_toxicity'] = df_html.select_dtypes(include='float').mean(axis=1)
+    df_html['std_toxicity'] = df_html.select_dtypes(include='float').std(axis=1)
+    df_html['score'] = df_html['mean_toxicity'] + df_html['std_toxicity']
     df_html['Score Pharmit'] = df_html_old['Score Pharmit']
     df_html['RMSD Pharmit'] = df_html_old['RMSD Pharmit']
-    df_html = df_html.sort_values(by='green_count', ascending=False)
-    df_html = df_html.drop(columns=['green_count'])
+    df_html = df_html.sort_values(by='score', ascending=True)
+    df_html = df_html.drop(columns=['mean_toxicity', 'std_toxicity', 'score'])
     return df_html
 
 
@@ -31,5 +33,5 @@ def results_to_html(output_folder_path: str, folder_name: str):
 
 
 if __name__ == '__main__':
-    results_to_html("/home/kdunorat/lambdapipe_results/testefinal", "testefinal")
+    results_to_html("/home/kdunorat/lambdapipe_results/teste_final_2", "multiplica")
 
