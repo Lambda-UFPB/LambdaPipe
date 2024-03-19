@@ -17,14 +17,14 @@ class PharmitControl:
         self.ligand_path = ligand_path
         self.total_hits = 0
         self.no_results = []
-
+        self.is_plip = None
         self.db_list = [['chembl', 'chemdiv', 'chemspace', 'molport', 'mcule'],
                         ['ultimate', 'enamine', 'pubchem', 'wuxi-lab', 'zinc']]
-        #self.db_list = [['zinc', 'wuxi-lab'],
-                        #['nsc']]
+        #self.db_list = [['nsc'],
+                        #['enamine']]
         self.hit_limit = {'chembl': 2, 'chemspace': 2, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 5}
         self.big_dbs = ['chemspace', 'pubchem']
-        #self.hit_limit = {'zinc': 5}
+        self.modified_json_path = ''
         chrome_options = Options()
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -82,7 +82,6 @@ class PharmitControl:
         self.driver.execute_script("arguments[0].setAttribute('value', arguments[1]);", database, db)
 
     def _hit_reduction(self, db):
-        # Hit reduction
         if db in self.hit_limit.keys():
             self.driver.find_element(By.XPATH, '//*[@id="ui-id-7"]').click()
             for limit in range(self.hit_limit[db]):
@@ -94,11 +93,11 @@ class PharmitControl:
                     except ElementNotInteractableException:
                         pass
 
-    def _upload_json(self, db, modified_json_path):
+    def _upload_json(self, n, json_path):
         # Upload session
-        self.driver.switch_to.window(f"{db}")
+        self.driver.switch_to.window(f"{self.db_list[0][n]}")
         load_session = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/div/input')
-        load_session.send_keys(modified_json_path)
+        load_session.send_keys(json_path)
         while True:
             try:
                 self.driver.find_element(By.XPATH, '//*[@class="pharmit_featurediv pharmit_enabledfeature"]')
@@ -133,7 +132,7 @@ class PharmitControl:
             for n, db in enumerate(db_half):
                 if db in searched_dbs:
                     continue
-                if run_lambdapipe == 0 and db in self.big_dbs:
+                if run_lambdapipe == 0 and db in self.big_dbs and self.is_plip:
                     search_count += 1
                     searched_dbs.append(db)
                     continue
@@ -200,7 +199,7 @@ class PharmitControl:
 
         return number_of_hits
 
-    def _download_loop(self, db_half: list, run_lambdapipe, fast=False):
+    def _download_loop(self, db_half: list, run_lambdapipe):
         proceed = False
         downloaded_dbs = []
         last = False
@@ -213,7 +212,7 @@ class PharmitControl:
                     break
                 if db in downloaded_dbs:
                     continue
-                if run_lambdapipe == 0 and db in self.big_dbs:
+                if run_lambdapipe == 0 and db in self.big_dbs and self.is_plip:
                     downloaded_dbs.append(db)
                     continue
                 if db in self.no_results:
@@ -260,39 +259,55 @@ class PharmitControl:
                     time.sleep(1)
         return True
 
-    def _run_fast(self, modified_json_path, run_lambdapipe):
+    def _run_fast(self, run_lambdapipe):
         for index, db in enumerate(self.db_list[0]):
             if run_lambdapipe == 0:
                 self._open_tab(index, db)
             time.sleep(1)
-            self._upload_json(db, modified_json_path)
+            self._upload_json(n=index, json_path=self.modified_json_path)
             self._change_db(0, index, db)
             if run_lambdapipe == 0:
                 self._hit_reduction(db)
             time.sleep(1)
             self._search(db)
         self._search_loop(0, self.db_list[0], run_lambdapipe)
-        self._download_loop(self.db_list[0], run_lambdapipe, fast=True)
+        self._download_loop(self.db_list[0], run_lambdapipe)
 
-    def _run_slow(self, modified_json_path, run_lambdapipe):
+    def _run_slow(self, run_lambdapipe):
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
-                if run == 0:
+                if run_lambdapipe == 0 and run == 0:
                     self._open_tab(count, db)
-                    self._upload_json(db, modified_json_path)
+                self._upload_json(n=count, json_path=self.modified_json_path)
                 self._change_db(run, count, db)
+                if run_lambdapipe == 0 and self.is_plip:
+                    self._hit_reduction(db)
+                time.sleep(1)
                 self._search(db)
             self._search_loop(run, db_half, run_lambdapipe)
-            self._download_loop(db_half, run_lambdapipe, fast=False)
-
-    def run_pharmit_search(self, modified_json_path, run_lambdapipe, quit_now=False, fast=False):
+            self._download_loop(db_half, run_lambdapipe)
+    def _run_chain(self, run_lambdapipe):
+        if run_lambdapipe == 0:
+            self._open_tab(index, db)
+        time.sleep(1)
+        self._upload_json(n=index, json_path=self.modified_json_path)
+        self._change_db(0, index, db)
+        if run_lambdapipe == 0:
+            self._hit_reduction(db)
+        time.sleep(1)
+        self._search(db)
+        self._search_loop(0, self.db_list[0], run_lambdapipe)
+        self._download_loop(self.db_list[0], run_lambdapipe)
+    def run_pharmit_search(self, modified_json_path, run_lambdapipe, quit_now=False, is_plip=None, fast=False):
         old_download_list = get_download_list('minimized_results*')
+        self.modified_json_path = modified_json_path
+        self.is_plip = is_plip
         if fast:
             if run_lambdapipe == 0:
                 self.db_list = [self.db_list[0] + self.db_list[1]]
-            self._run_fast(modified_json_path, run_lambdapipe)
+            self._run_fast(run_lambdapipe)
         else:
-            self._run_slow(modified_json_path, run_lambdapipe)
+            self._run_slow(run_lambdapipe)
 
         if PharmitControl.check_finished_download(self.minimize_count, old_download_list):
             if quit_now:
