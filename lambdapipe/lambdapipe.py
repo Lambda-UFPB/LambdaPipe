@@ -23,25 +23,28 @@ from utils import (generate_folder_name, create_folders, create_stats_file, get_
                    get_absolute_path, write_stats, merge_csv)
 
 
-
 @click.command()
 @click.argument("receptor_file", type=click.Path(exists=True), required=False)
 @click.argument("ligand_file", type=click.Path(exists=True), required=False)
-@click.option("-t", "--top", type=int, default=400,
+@click.option("-t", "--top", type=int, default=1000,
               help="The number of the top molecules by score to search in admetlab 2.0")
 @click.option("-r", "--rmsd", type=float, default=7.0, help="RMSD threshold for filtering the results")
 @click.option("-p", "--pharma", is_flag=True, help="Prompt the user for additional input")
 @click.option("-s", "--session", type=str, help="Session file for pharmit search")
 @click.option("--plip_csv", type=str, help="PLIP csv file for optimized pharmit search")
-@click.option("-f", "--fast", is_flag=True, help="Perform all the databases search in the same browser window")
+@click.option("--slow", is_flag=True, help="Perform half of the databases search at a time")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
-def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv, fast, output):
+def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv, slow, output):
     if (not session and (not receptor_file or not ligand_file)) or (session and (receptor_file or ligand_file)):
         raise click.BadParameter(
             "You must provide either a session or both a receptor file and a ligand file.")
     if (plip_csv and session) or (plip_csv and pharma):
         raise click.BadParameter(
             "You can't provide a plip csv file with a session or with the pharma flag.")
+    if slow:
+        fast = False
+    else:
+        fast = True
 
     start_time = time.time()
     folder_name = output if output else generate_folder_name()
@@ -53,7 +56,7 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
     pharmacophore_number = False
     if session:
         phc = PharmitControl('', '', output_folder_path)
-        new_session = session
+        new_session = [session]
 
     else:
         jsh, phc = creating_complex(receptor_file, ligand_file, output_folder_path, old_download_list)
@@ -73,14 +76,14 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
                 pharmacophore_number = True
         else:
             new_session = [jsh.create_json()]
-    minino = 27
-    exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time, minino,
-                    pharmacophore_number, fast)
+
+    minimize_count = exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_number,
+                                            is_plip=plip_csv, fast=fast)
+    exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folder, rmsd, folder_name, start_time)
 
 
-def exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rmsd, folder_name, start_time, minino,
-                    pharmacophore_number, fast=False):
-    """
+def exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_number, is_plip, fast=False):
+
     minimize_count = 0
     pharmacophore_number = 3 if pharmacophore_number else pharmacophore_number
     quit_now = False
@@ -91,13 +94,19 @@ def exec_lambdapipe(new_session, phc, top, output_folder_path, admet_folder, rms
             quit_now = True
 
         if pharmacophore_number:
-            write_stats(f"\nResults with {pharmacophore_number} pharmacophores:\n", output_folder_path)
-            pharmacophore_number += index
-        minimize_count += phc.run_pharmit_search(session, run_lambdapipe=index, quit_now=quit_now, fast=fast)
+            write_stats(f"\n\nHits with {pharmacophore_number} pharmacophores:\n", output_folder_path)
+            pharmacophore_number += 1
+        else:
+            write_stats(f"\nHits:\n", output_folder_path)
+        minimize_count += phc.run_pharmit_search(session, run_lambdapipe=index, quit_now=quit_now, is_plip=is_plip,
+                                                 fast=fast)
         phc.no_results = []
         phc.minimize_count = 0
-    """
-    minimize_count = minino
+
+    return minimize_count
+
+
+def exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folder, rmsd, folder_name, start_time):
     click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, rmsd)
     dict_final = sdfp.run_sdfprocessor()

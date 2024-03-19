@@ -261,43 +261,30 @@ class PharmitControl:
 
     def _run_fast(self, run_lambdapipe):
         for index, db in enumerate(self.db_list[0]):
-            if run_lambdapipe == 0:
-                self._open_tab(index, db)
-            time.sleep(1)
-            self._upload_json(n=index, json_path=self.modified_json_path)
-            self._change_db(0, index, db)
-            if run_lambdapipe == 0:
-                self._hit_reduction(db)
-            time.sleep(1)
-            self._search(db)
-        self._search_loop(0, self.db_list[0], run_lambdapipe)
-        self._download_loop(self.db_list[0], run_lambdapipe)
+            self._run_chain(db, index, run_lambdapipe, 0)
+        self._loops(run_lambdapipe, 0, self.db_list[0])
 
     def _run_slow(self, run_lambdapipe):
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
-                if run_lambdapipe == 0 and run == 0:
-                    self._open_tab(count, db)
-                self._upload_json(n=count, json_path=self.modified_json_path)
-                self._change_db(run, count, db)
-                if run_lambdapipe == 0 and self.is_plip:
-                    self._hit_reduction(db)
-                time.sleep(1)
-                self._search(db)
-            self._search_loop(run, db_half, run_lambdapipe)
-            self._download_loop(db_half, run_lambdapipe)
-    def _run_chain(self, run_lambdapipe):
-        if run_lambdapipe == 0:
+                self._run_chain(db, count, run_lambdapipe, run)
+            self._loops(run_lambdapipe, run, db_half)
+
+    def _run_chain(self, db, index, run_lambdapipe, run):
+        if run_lambdapipe == 0 or run == 0:
             self._open_tab(index, db)
         time.sleep(1)
         self._upload_json(n=index, json_path=self.modified_json_path)
-        self._change_db(0, index, db)
-        if run_lambdapipe == 0:
+        self._change_db(run, index, db)
+        if run_lambdapipe == 0 and self.is_plip:
             self._hit_reduction(db)
         time.sleep(1)
         self._search(db)
-        self._search_loop(0, self.db_list[0], run_lambdapipe)
-        self._download_loop(self.db_list[0], run_lambdapipe)
+
+    def _loops(self, run_lambdapipe, run, db_half):
+        self._search_loop(run, db_half, run_lambdapipe)
+        self._download_loop(db_half, run_lambdapipe)
+
     def run_pharmit_search(self, modified_json_path, run_lambdapipe, quit_now=False, is_plip=None, fast=False):
         old_download_list = get_download_list('minimized_results*')
         self.modified_json_path = modified_json_path
