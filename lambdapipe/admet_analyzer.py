@@ -23,8 +23,8 @@ class AdmetAnalyzer:
         self.admet_df = pd.concat([first_column, toxicity, tox_21pathway, lipinski], axis=1)
 
     def _filter_conditions(self):
-        condition1 = (self.admet_df.iloc[:, 27:38].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 3
-        condition2 = (self.admet_df.iloc[:, 42:54].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 3
+        condition1 = (self.admet_df.iloc[:, 1:12].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 4
+        condition2 = (self.admet_df.iloc[:, 12:24].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 4
         condition3 = self.admet_df['Respiratory'] <= 0.3
         combined_condition = condition1 & condition2 & condition3
 
