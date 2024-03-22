@@ -2,7 +2,6 @@ from utils import *
 from exceptions import NoMoleculeError
 
 
-
 class AdmetAnalyzer:
     def __init__(self, output_folder_path: str, admet_path: str, best_molecules_dict: dict, dict_smiles_list: list):
         csv_path = f'{admet_path}/merged.csv'

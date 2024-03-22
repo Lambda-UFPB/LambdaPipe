@@ -87,7 +87,6 @@ def exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_n
     minimize_count = 0
     pharmacophore_number = 3 if pharmacophore_number else pharmacophore_number
     quit_now = False
-    print(f"TAMANHO DO NEW SESSION: {len(new_session)}")
     for index, session in enumerate(new_session):
         click.echo(f"Starting pharmit search of config {index + 1}")
 

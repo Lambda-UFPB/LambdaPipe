@@ -22,7 +22,6 @@ class PharmaOptimizer:
         }
         self.pharmit_spheres_type_available = []
         self.spheres_in_interaction_limit = 0
-        self.total_pharmit_spheres = 0
 
     def _generate_pharmit_spheres(self):
         pharmit_spheres_type_available = []
@@ -38,7 +37,6 @@ class PharmaOptimizer:
             self.spheres_dict[feature['name']]['pharmit_spheres'].append(PharmaSphere(feature['x'], feature['y'],
                                                                                       feature['z'], feature['radius'],
                                                                                       feature['name'], is_donor))
-            self.total_pharmit_spheres += 1
 
     def _generate_plip_spheres(self):
         for index, row in self.plip_df.iterrows():
@@ -113,10 +111,8 @@ class PharmaOptimizer:
             self.spheres_dict[interaction]['pharmit_spheres'].remove(pharmit_sphere)
 
     def _get_new_pharmit_spheres_list(self):
-        print(self.total_pharmit_spheres)
         new_total_pharmit_spheres = sum(len(value['pharmit_spheres']) for value in self.spheres_dict.values())
         analyzed_interactions = [(x.quantity_matched, x.interaction_type) for x in self._get_last_pharmit_spheres()]
-        print(new_total_pharmit_spheres)
         all_plip_spheres = []
         if new_total_pharmit_spheres < 5:
             quantity_to_create = 5 - new_total_pharmit_spheres
