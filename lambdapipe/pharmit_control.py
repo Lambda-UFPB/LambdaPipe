@@ -255,6 +255,7 @@ class PharmitControl:
     @staticmethod
     def check_finished_download(minimized_count, old_download_list):
         while True:
+            print("PRESO NO CHECK FINISH")
             new_download_list = get_last_files('minimized_results*', old_download_list, minimized_count, check_download=True)
             if not check_downloads_complete(new_download_list):
                 continue
