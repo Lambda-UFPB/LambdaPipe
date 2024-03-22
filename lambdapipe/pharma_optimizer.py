@@ -90,7 +90,7 @@ class PharmaOptimizer:
         else:
             return None
 
-    def analyze_sphere_pairs(self):
+    def _analyze_sphere_pairs(self):
         for interaction in self.pharmit_spheres_type_available:
             for pharmit_sphere in self.spheres_dict[interaction]['pharmit_spheres']:
                 self._interaction_distance_check(pharmit_sphere, interaction)
@@ -141,6 +141,7 @@ class PharmaOptimizer:
         """Creates the sphere in pharmit to interact to the plip sphere"""
         is_donor = not is_donor
         new_pharmit_sphere = PharmaSphere(x, y, z, 1.0, interaction, is_donor=is_donor)
+        new_pharmit_sphere.quantity_matched = quantity
         return new_pharmit_sphere
 
     def _factor_multiplier(self, factor, decrease=False):
@@ -163,7 +164,7 @@ class PharmaOptimizer:
         self._generate_pharmit_spheres()
         self._generate_plip_spheres()
         self._get_pharmacophore_limit()
-        self.analyze_sphere_pairs()
+        self._analyze_sphere_pairs()
         self._factor_multiplier(1.5)
         self._factor_multiplier(0.2, decrease=True)
         return self._get_last_pharmit_spheres()
