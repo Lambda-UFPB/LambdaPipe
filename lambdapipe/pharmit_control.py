@@ -64,6 +64,12 @@ class PharmitControl:
             # Upload ligand
             load_ligand = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[3]/div[3]/div[2]/input')
             load_ligand.send_keys(self.ligand_path)
+            while True:
+                try:
+                    self.driver.find_element(By.XPATH, '//*[@class="pharmit_featurediv pharmit_enabledfeature"]')
+                    break
+                except NoSuchElementException:
+                    pass
         except WebDriverException:
             raise InvalidInputError("Error uploading files. Please check the path and file name and try again.")
 

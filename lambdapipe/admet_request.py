@@ -5,7 +5,6 @@ import timeit
 from bs4 import BeautifulSoup
 import urllib3
 from exceptions import BadAdmetSmilesError
-from teste_pharma_opt import has_repeating_elements
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
