@@ -18,11 +18,11 @@ class PharmitControl:
         self.total_hits = 0
         self.no_results = []
         self.is_plip = None
-        self.db_list = [['chembl', 'chemdiv', 'chemspace', 'molport', 'mcule'],
-                        ['ultimate', 'enamine', 'pubchem', 'wuxi-lab', 'zinc']]
-        #self.db_list = [['nsc'],
-                        #['enamine']]
-        self.hit_limit = {'chembl': 2, 'chemspace': 2, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 5}
+        #self.db_list = [['chembl', 'chemdiv', 'chemspace', 'molport', 'mcule'],
+                        #['ultimate', 'enamine', 'pubchem', 'wuxi-lab', 'zinc']]
+        self.db_list = [['nsc'],
+                        ['enamine']]
+        self.hit_limit = {'chembl': 2, 'chemspace': 1, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 5}
         self.big_dbs = ['chemspace', 'pubchem']
         self.modified_json_path = ''
         chrome_options = Options()

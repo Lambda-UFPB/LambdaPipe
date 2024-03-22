@@ -57,7 +57,7 @@ class SdfProcessor:
         """Check if the molecule is already in the analyzed_mol
         set and if it fits the threshold (score < -11 and rmsd < 7)"""
         if not mol_ids_set.intersection(self.analyzed_mol):
-            if score < -11 and rmsd <= self.cli_rmsd:
+            if score < -10 and rmsd <= self.cli_rmsd:
                 return True
 
     def _get_best_molecules_dict(self):
@@ -73,14 +73,11 @@ class SdfProcessor:
         self._get_sdfs()
         self._process_sdf()
         if self.best_molecules:
-            write_stats(f"\n\nNumber of molecules after filtering (Score < -11 and RMSD < {self.cli_rmsd}): "
+            write_stats(f"\n\nNumber of molecules after filtering (Score < -10 and RMSD < {self.cli_rmsd}): "
                         f"{len(self.best_molecules)}", self.output_folder_path)
             if len(self.best_molecules) > self.top:
                 self._get_top_molecules(self.top)
 
-            else:
-                raise ValueError(f'No sufficient molecules ({len(self.best_molecules)}) to fit '
-                                 f'the minimum number of molecules: {self.top}')
             write_stats(f"\nBest score before admet research: {self.best_molecules[0]}", self.output_folder_path)
         else:
             raise ValueError('No molecules that fit the threshold found in the .sdf files')
