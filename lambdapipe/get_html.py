@@ -31,6 +31,10 @@ def results_to_html(output_folder_path: str, folder_name: str):
     df_html = get_df_html(df)
     styled_html_df = df_html.style.map(color_format, subset=df_html.columns[1:12])
     html = styled_html_df.to_html(index=False)
+    print(len(df_html))
+    if len(df_html) > 500:
+        subtitle = "<h4>Only the top 500 molecules are shown</h4>"
+        html = subtitle + html
     with open(f"{output_folder_path}/results/{folder_name}_results.html", "w") as f:
         f.write(html)
 
