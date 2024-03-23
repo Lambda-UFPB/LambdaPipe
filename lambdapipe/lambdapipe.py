@@ -11,15 +11,15 @@ Email: kdu.norat@gmail.com
 import click
 import time
 import asyncio
-from lambdapipe.pharmit_control import PharmitControl
-from lambdapipe.top_feature_configs import run_feature_configs
-from lambdapipe.pharma_optimizer import PharmaOptimizer
-from lambdapipe.json_handler import JsonHandler
-from lambdapipe.sdf_processor import SdfProcessor
-from lambdapipe.admet_request import run_admet_request
-from lambdapipe.admet_analyzer import AdmetAnalyzer
-from lambdapipe.get_html import results_to_html
-from lambdapipe.utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
+from pharmit_control import PharmitControl
+from top_feature_configs import run_feature_configs
+from pharma_optimizer import PharmaOptimizer
+from json_handler import JsonHandler
+from sdf_processor import SdfProcessor
+from admet_request import run_admet_request
+from admet_analyzer import AdmetAnalyzer
+from get_html import results_to_html
+from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
                               get_absolute_path, write_stats, merge_csv)
 
 
