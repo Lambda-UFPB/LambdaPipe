@@ -17,6 +17,7 @@ def get_df_html(df_html_old: pd.DataFrame):
     df_html['score'] = df_html['mean_toxicity'] + df_html['std_toxicity']
     df_html['Score Pharmit'] = df_html_old['Score Pharmit']
     df_html['RMSD Pharmit'] = df_html_old['RMSD Pharmit']
+    df_html['smiles'] = df_html_old['smiles']
     df_html = df_html.sort_values(by='score', ascending=True)
     df_html = df_html.reset_index(drop=True)
     df_html = df_html.drop(columns=['mean_toxicity', 'std_toxicity', 'score'])

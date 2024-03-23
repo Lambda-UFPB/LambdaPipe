@@ -17,7 +17,7 @@ class SdfProcessor:
     def __getitem__(self, index):
         return self.best_molecules[index]
 
-    def _get_sdfs(self):
+    def get_sdfs(self):
         """Get the .sdfs files from download page"""
         last_files = get_last_files(file_pattern='minimized_results*', minimize_count=self.minimize_count)
         if len(last_files) > self.minimize_count:
@@ -25,7 +25,7 @@ class SdfProcessor:
             last_files = last_files[:-n]
 
         for file in last_files:
-            transfer_to_folder(file, self.output_folder_path, 'cp')
+            transfer_to_folder(file, self.output_folder_path, 'mv')
             file_name = get_file_name(file)
             zipped_path = f"{self.output_folder_path}/{file_name}"
             unzipped_path = unzip(zipped_path)
@@ -57,7 +57,7 @@ class SdfProcessor:
         """Check if the molecule is already in the analyzed_mol
         set and if it fits the threshold (score < -11 and rmsd < 7)"""
         if not mol_ids_set.intersection(self.analyzed_mol):
-            if score < -10 and rmsd <= self.cli_rmsd:
+            if score < -9 and rmsd <= self.cli_rmsd:
                 return True
 
     def _get_best_molecules_dict(self):
@@ -70,10 +70,9 @@ class SdfProcessor:
         self.best_molecules = self.best_molecules[:top]
 
     def run_sdfprocessor(self):
-        self._get_sdfs()
         self._process_sdf()
         if self.best_molecules:
-            write_stats(f"\n\nNumber of molecules after filtering (Score < -10 and RMSD < {self.cli_rmsd}): "
+            write_stats(f"\n\nNumber of molecules after filtering (Score < -9 and RMSD < {self.cli_rmsd}): "
                         f"{len(self.best_molecules)}", self.output_folder_path)
             if len(self.best_molecules) > self.top:
                 self._get_top_molecules(self.top)
@@ -86,6 +85,6 @@ class SdfProcessor:
 
 
 if __name__ == '__main__':
-    sdf = SdfProcessor(20, 800, "/home/kdunorat/lambdapipe_results/testefinal")
+    sdf = SdfProcessor(30, 2000, "/home/kdunorat/lambdapipe_results/7DK5-272")
     dict_final = sdf.run_sdfprocessor()
     print(dict_final)

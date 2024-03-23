@@ -23,8 +23,8 @@ class AdmetAnalyzer:
 
     def _filter_conditions(self):
         condition1 = (self.admet_df.iloc[:, 1:12].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 4
-        condition2 = (self.admet_df.iloc[:, 12:24].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 4
-        condition3 = self.admet_df['Respiratory'] <= 0.3
+        condition2 = (self.admet_df.iloc[:, 12:24].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 6
+        condition3 = self.admet_df['Respiratory'] < 0.7
         combined_condition = condition1 & condition2 & condition3
 
         self.admet_df = self.admet_df[combined_condition]
