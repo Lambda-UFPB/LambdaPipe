@@ -30,10 +30,10 @@ def exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folde
 if __name__ == '__main__':
     minimize_count = 30
     top = 2000
-    output_folder_path = "/home/kdunorat/lambdapipe_results/7DK5-272"
-    admet_folder = "/home/kdunorat/lambdapipe_results/7DK5-272/admet"
+    output_folder_path = "/home/kdunorat/lambdapipe_results/7KNB-56"
+    admet_folder = "/home/kdunorat/lambdapipe_results/7KNB-56/admet"
     rmsd = 7
-    folder_name = "7DK5-272"
+    folder_name = "7KNB-56"
     start_time = time.time()
     exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folder, rmsd,
                             folder_name, start_time)

@@ -100,7 +100,7 @@ async def get_csv(session: ClientSession, smiles: str, index: int):
 
 async def download(session, path: str, csv, output_folder_path: str):
     global download_url
-    async with session.get(f"{download_url}{path}", ssl=SSL) as d_response:
+    async with session.get(f"{download_url}{path}", ssl=SSL, timeout=99999) as d_response:
         content = await d_response.text()
     with open(f'{output_folder_path}/admet/{csv}', 'w') as csv_file:
         csv_file.write(content)
