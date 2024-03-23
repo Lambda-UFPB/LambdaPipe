@@ -5,8 +5,8 @@ from selenium.common.exceptions import (WebDriverException, NoSuchElementExcepti
                                         StaleElementReferenceException, ElementNotInteractableException)
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from utils import *
-from exceptions import InvalidInputError
+from .utils import *
+from .exceptions import InvalidInputError
 
 
 class PharmitControl:

@@ -4,7 +4,7 @@ import asyncio
 import timeit
 from bs4 import BeautifulSoup
 import urllib3
-from exceptions import BadAdmetSmilesError
+from .exceptions import BadAdmetSmilesError
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 

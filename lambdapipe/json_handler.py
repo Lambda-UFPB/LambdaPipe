@@ -1,5 +1,5 @@
 import json
-from utils import *
+from .utils import *
 
 
 class JsonHandler:

@@ -1,5 +1,5 @@
-from utils import *
-from exceptions import NoMoleculeError
+from .utils import *
+from .exceptions import NoMoleculeError
 
 
 class AdmetAnalyzer:
