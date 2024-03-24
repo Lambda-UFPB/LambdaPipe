@@ -29,7 +29,7 @@ def exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folde
 
 if __name__ == '__main__':
     minimize_count = 30
-    top = 4000
+    top = 3000
     output_folder_path = "/home/kdunorat/lambdapipe_results/7KR1-3-CID87"
     admet_folder = "/home/kdunorat/lambdapipe_results/7KR1-3-CID87/admet"
     rmsd = 7
