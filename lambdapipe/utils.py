@@ -19,7 +19,7 @@ def create_stats_file(output_folder_path: str):
 
 
 def transfer_to_folder(old_path: str, new_path: str, opt: str):
-    cmd = f"{opt} '{old_path}' {new_path}"
+    cmd = f"{opt} '{old_path}' '{new_path}'"
     os.system(cmd)
 
 
