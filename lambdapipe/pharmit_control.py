@@ -24,7 +24,7 @@ class PharmitControl:
                         #['enamine']]
         self.hit_limit = {'chembl': 2, 'chemspace': 1, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 5}
         #self.big_dbs = ['chemspace', 'pubchem']
-        self.big_dbs = ['nothing']
+        self.big_dbs = []
         self.modified_json_path = ''
         chrome_options = Options()
         possible_chrome_binary_locations = get_chrome_binary_path()
@@ -112,7 +112,7 @@ class PharmitControl:
             except NoSuchElementException:
                 pass
 
-    def _search(self, db):
+    def _search(self):
         # Click on the search button
         search = self.driver.find_element(By.XPATH, '//*[@id="pharmitsearchbutton"]')
         while True:
@@ -129,23 +129,31 @@ class PharmitControl:
             except NoSuchElementException:
                 pass
 
-    def _search_loop(self, run: int, db_half: list, run_lambdapipe: int):
+    def _search_loop(self, db_half: list):
         search_count = 0
         searched_dbs = []
         last = False
+        start_time = time.time()
         while True:
             if search_count == len(db_half):
                 break
             for n, db in enumerate(db_half):
+                current_time = time.time()
+                current_time = current_time - start_time
                 if db in searched_dbs:
                     continue
-                if run_lambdapipe == 0 and db in self.big_dbs and self.is_plip:
+                if current_time > 2100:
                     search_count += 1
                     searched_dbs.append(db)
+                    self.big_dbs.append(db)
                     continue
                 time.sleep(3)
                 if not last:
                     self.driver.switch_to.window(f"{self.db_list[0][n]}")
+                    try:
+                        self.driver.switch_to.alert.dismiss()
+                    except NoAlertPresentException:
+                        pass
                     if len(db_half) - search_count == 1:
                         last = True
                 minimize_button = self.driver.find_element(By.XPATH,
@@ -206,7 +214,7 @@ class PharmitControl:
 
         return number_of_hits
 
-    def _download_loop(self, db_half: list, run_lambdapipe):
+    def _download_loop(self, db_half: list):
         proceed = False
         downloaded_dbs = []
         last = False
@@ -219,7 +227,7 @@ class PharmitControl:
                     break
                 if db in downloaded_dbs:
                     continue
-                if run_lambdapipe == 0 and db in self.big_dbs and self.is_plip:
+                if db in self.big_dbs:
                     downloaded_dbs.append(db)
                     continue
                 if db in self.no_results:
@@ -255,6 +263,8 @@ class PharmitControl:
 
     @staticmethod
     def check_finished_download(minimized_count, old_download_list):
+        if minimized_count == 0:
+            return True
         while True:
             print("PRESO NO CHECK FINISH")
             new_download_list = get_last_files('minimized_results*', old_download_list, minimized_count, check_download=True)
@@ -270,13 +280,13 @@ class PharmitControl:
     def _run_fast(self, run_lambdapipe):
         for index, db in enumerate(self.db_list[0]):
             self._run_chain(db, index, run_lambdapipe, 0)
-        self._loops(run_lambdapipe, 0, self.db_list[0])
+        self._loops(self.db_list[0])
 
     def _run_slow(self, run_lambdapipe):
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
                 self._run_chain(db, count, run_lambdapipe, run)
-            self._loops(run_lambdapipe, run, db_half)
+            self._loops(db_half)
 
     def _run_chain(self, db, index, run_lambdapipe, run):
         if run_lambdapipe == 0 or run == 0:
@@ -287,11 +297,11 @@ class PharmitControl:
         if run_lambdapipe == 0 and self.is_plip:
             self._hit_reduction(db)
         time.sleep(1)
-        self._search(db)
+        self._search()
 
-    def _loops(self, run_lambdapipe, run, db_half):
-        self._search_loop(run, db_half, run_lambdapipe)
-        self._download_loop(db_half, run_lambdapipe)
+    def _loops(self, db_half):
+        self._search_loop(db_half)
+        self._download_loop(db_half)
 
     def run_pharmit_search(self, modified_json_path, run_lambdapipe, quit_now=False, is_plip=None, fast=False):
         old_download_list = get_download_list('minimized_results*')
