@@ -26,7 +26,7 @@ from utils import (generate_folder_name, create_folders, create_stats_file, get_
 @click.command()
 @click.argument("receptor_file", type=click.Path(exists=True), required=False)
 @click.argument("ligand_file", type=click.Path(exists=True), required=False)
-@click.option("-t", "--top", type=int, default=1000,
+@click.option("-t", "--top", type=int, default=2000,
               help="The number of the top molecules by score to search in admetlab 2.0")
 @click.option("-r", "--rmsd", type=float, default=7.0, help="RMSD threshold for filtering the results")
 @click.option("-p", "--pharma", is_flag=True, help="Prompt the user for additional input")

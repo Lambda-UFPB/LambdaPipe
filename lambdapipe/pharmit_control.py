@@ -142,7 +142,7 @@ class PharmitControl:
                 current_time = current_time - start_time
                 if db in searched_dbs:
                     continue
-                if current_time > 2100:
+                if current_time > 2500:
                     search_count += 1
                     searched_dbs.append(db)
                     self.big_dbs.append(db)
