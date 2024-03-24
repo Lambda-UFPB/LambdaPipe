@@ -29,11 +29,11 @@ def exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folde
 
 if __name__ == '__main__':
     minimize_count = 30
-    top = 2000
-    output_folder_path = "/home/kdunorat/lambdapipe_results/7KNB-56"
-    admet_folder = "/home/kdunorat/lambdapipe_results/7KNB-56/admet"
+    top = 4000
+    output_folder_path = "/home/kdunorat/lambdapipe_results/7KR1-3-CID87"
+    admet_folder = "/home/kdunorat/lambdapipe_results/7KR1-3-CID87/admet"
     rmsd = 7
-    folder_name = "7KNB-56"
+    folder_name = "7KR1-3-CID87"
     start_time = time.time()
     exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folder, rmsd,
                             folder_name, start_time)
