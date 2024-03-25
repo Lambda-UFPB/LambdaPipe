@@ -109,6 +109,7 @@ def exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_n
 def exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folder, rmsd, folder_name, start_time):
     click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, rmsd)
+    sdfp.get_sdfs()
     dict_final = sdfp.run_sdfprocessor()
 
     click.echo("\nGetting ADMET info...")

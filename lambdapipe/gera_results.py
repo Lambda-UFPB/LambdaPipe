@@ -10,6 +10,9 @@ import time
 def exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folder, rmsd, folder_name, start_time):
     print("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, rmsd)
+    #sdfp.get_sdfs()
+    with open(f"lista.txt", "r") as f:
+        sdfp.sdf_files = eval(f.read())
     dict_final = sdfp.run_sdfprocessor()
 
     print("\nGetting ADMET info...")
@@ -28,9 +31,9 @@ def exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folde
 
 if __name__ == '__main__':
     minimize_count = 30
-    top = 3000
-    output_folder_path = "/home/kdunorat/lambdapipe_results/testando1"
-    admet_folder = "/home/kdunorat/lambdapipe_results/testando1/admet"
+    top = 3500
+    output_folder_path = "/home/kdunorat/lambdapipe_results/7KR1-3-CID87"
+    admet_folder = "/home/kdunorat/lambdapipe_results/7KR1-3-CID87/admet"
     rmsd = 7
     folder_name = "7KR1-3-CID87"
     start_time = time.time()

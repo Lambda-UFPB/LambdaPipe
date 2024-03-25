@@ -17,7 +17,7 @@ class SdfProcessor:
     def __getitem__(self, index):
         return self.best_molecules[index]
 
-    def _get_sdfs(self):
+    def get_sdfs(self):
         """Get the .sdfs files from download page"""
         last_files = get_last_files(file_pattern='minimized_results*', minimize_count=self.minimize_count)
         if len(last_files) > self.minimize_count:
@@ -68,7 +68,6 @@ class SdfProcessor:
         self.best_molecules = self.best_molecules[:top]
 
     def run_sdfprocessor(self):
-        self._get_sdfs()
         self._process_sdf()
         if self.best_molecules:
             write_stats(f"\n\nNumber of molecules after filtering (Score < -9 and RMSD < {self.cli_rmsd}): "

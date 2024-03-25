@@ -107,6 +107,10 @@ class PharmitControl:
         load_session.send_keys(json_path)
         while True:
             try:
+                self.driver.switch_to.alert.dismiss()
+            except NoAlertPresentException:
+                pass
+            try:
                 self.driver.find_element(By.XPATH, '//*[@class="pharmit_featurediv pharmit_enabledfeature"]')
                 break
             except NoSuchElementException:
