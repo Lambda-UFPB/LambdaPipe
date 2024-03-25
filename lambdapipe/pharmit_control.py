@@ -106,6 +106,7 @@ class PharmitControl:
         load_session = self.driver.find_element(By.XPATH, '/html/body/div[1]/div[2]/div[5]/div/div/input')
         load_session.send_keys(json_path)
         while True:
+            time.sleep(1)
             try:
                 self.driver.switch_to.alert.dismiss()
             except NoAlertPresentException:

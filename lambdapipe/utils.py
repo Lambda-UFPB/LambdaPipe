@@ -44,6 +44,13 @@ def get_file_name(path: str):
     return file_name
 
 
+def get_minimized_results_files_list(directory_path):
+    path_pattern = os.path.join(directory_path, '*minimized_results*')
+    files = glob.glob(path_pattern)
+    absolute_paths = [os.path.abspath(file) for file in files]
+    return absolute_paths
+
+
 def create_folders(folder_name: str):
     main_directory_path = os.path.expanduser(f"~/lambdapipe_results")
     if not os.path.exists(main_directory_path):
@@ -108,7 +115,11 @@ def get_last_files(file_pattern: str, old_download_list: list = None, minimize_c
             download_list = [f for f in download_list if os.path.isfile(f) and not f.endswith('.crdownload')]
         else:
             download_list = [f for f in download_list if os.path.isfile(f) and f not in old_download_list]
-        download_list.sort(key=os.path.getmtime, reverse=True)
+        try:
+            download_list.sort(key=os.path.getmtime, reverse=True)
+        except FileNotFoundError:
+            time.sleep(1)
+            continue
         if len(download_list) > len(old_download_list) and file_pattern == 'pharmit*.json*':
             try:
                 most_recent = download_list[0]
@@ -128,5 +139,4 @@ def check_downloads_complete(download_list: list):
 
 
 if __name__ == '__main__':
-    download_path = get_last_files('pharmit*.json*')
-    print(download_path)
+    pass
