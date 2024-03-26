@@ -15,11 +15,11 @@ class AdmetAnalyzer:
 
     def _filter_toxicity(self):
         first_column = self.admet_df.iloc[:, 0]
-        lipinski = self.admet_df.loc[:, 'Lipinski']
+        regras = self.admet_df.iloc[:, 85:]
         toxicity = self.admet_df.iloc[:, 27:38]
         tox_21pathway = self.admet_df.iloc[:, 42:54]
 
-        self.admet_df = pd.concat([first_column, toxicity, tox_21pathway, lipinski], axis=1)
+        self.admet_df = pd.concat([first_column, toxicity, tox_21pathway, regras], axis=1)
 
     def _filter_conditions(self):
         condition1 = (self.admet_df.iloc[:, 1:12].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 4

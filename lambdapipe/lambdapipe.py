@@ -21,6 +21,7 @@ from admet_analyzer import AdmetAnalyzer
 from get_html import results_to_html
 from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
                    get_absolute_path, get_minimized_results_files_list, write_stats, merge_csv)
+from exceptions import AdmetServerError
 
 
 @click.command()
@@ -37,6 +38,7 @@ from utils import (generate_folder_name, create_folders, create_stats_file, get_
 @click.option("--process", type=str,
               help="Process the results on a specific folder without performing the search")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
+@click.version_option("0.9.0")
 def lambdapipe(receptor_file, ligand_file, top, score, rmsd, pharma, session, plip_csv, slow, process, output):
 
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
@@ -138,7 +140,11 @@ def exec_lambdapipe_process(minimize_count, top, score, output_folder_path, adme
     dict_final = sdfp.run_sdfprocessor()
 
     click.echo("\nGetting ADMET info...")
-    smiles_list = asyncio.run(asyncio.wait_for(run_admet_request(dict_final, output_folder_path), timeout=120000))
+    try:
+        smiles_list = asyncio.run(asyncio.wait_for(run_admet_request(dict_final, output_folder_path), timeout=120000))
+    except AdmetServerError:
+        click.echo("\nError: ADMET server is down. Please try again later using lambdapipe --process.")
+        return
     merge_csv(admet_folder)
 
     click.echo("\nGenerating final results...")

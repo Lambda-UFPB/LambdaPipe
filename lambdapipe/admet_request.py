@@ -4,7 +4,7 @@ import asyncio
 import timeit
 from bs4 import BeautifulSoup
 import urllib3
-from exceptions import BadAdmetSmilesError
+from exceptions import BadAdmetSmilesError, AdmetServerError
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -32,6 +32,15 @@ def check_ssl():
         SSL = False
     url = f"{protocol}://admetmesh.scbdd.com/service/screening/cal"
     download_url = f"{protocol}://admetmesh.scbdd.com"
+
+
+def check_is_online():
+    """Check if the admetmesh server is online"""
+    global url
+    try:
+        requests.get(url, verify=True, timeout=80)
+    except requests.exceptions.RequestException:
+        raise AdmetServerError()
 
 
 def get_smiles_string(best_molecules_dict: dict):
@@ -109,6 +118,10 @@ async def download(session, path: str, csv, output_folder_path: str):
 async def run_admet_request(best_molecules_dict: dict, output_folder_path: str):
     global dict_smiles_list
     check_ssl()
+    try:
+        check_is_online()
+    except AdmetServerError:
+        raise AdmetServerError()
     smiles_strings, dict_smiles_list = get_smiles_string(best_molecules_dict)
     timeout = ClientTimeout(total=120000)
     async with ClientSession(timeout=timeout) as session:
@@ -147,6 +160,3 @@ if __name__ == "__main__":
     execution_time = end_time - start_time
     print(f"The function took {execution_time} seconds to complete")
     print(dict_smiles)
-
-
-
