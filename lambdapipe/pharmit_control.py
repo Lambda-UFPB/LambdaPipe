@@ -21,9 +21,8 @@ class PharmitControl:
         self.db_list = [['chembl', 'chemdiv', 'chemspace', 'molport', 'mcule'],
                         ['ultimate', 'enamine', 'pubchem', 'wuxi-lab', 'zinc']]
         #self.db_list = [['nsc'],
-                        #['enamine']]
-        self.hit_limit = {'chembl': 2, 'chemspace': 1, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 5}
-        #self.big_dbs = ['chemspace', 'pubchem']
+                        #['zinc']]
+        self.hit_limit = {'chembl': 2, 'chemspace': 1, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 4}
         self.big_dbs = []
         self.modified_json_path = ''
         chrome_options = Options()
@@ -117,13 +116,14 @@ class PharmitControl:
             except NoSuchElementException:
                 pass
 
-    def _search(self):
+    def _search(self, db=None):
         # Click on the search button
         search = self.driver.find_element(By.XPATH, '//*[@id="pharmitsearchbutton"]')
         while True:
             try:
                 search.click()
                 time.sleep(1)
+                print(f"searching {db}")
                 break
             except WebDriverException:
                 pass
@@ -147,18 +147,26 @@ class PharmitControl:
                 current_time = current_time - start_time
                 if db in searched_dbs:
                     continue
-                if current_time > 2500:
+                if current_time > 2100:
                     search_count += 1
                     searched_dbs.append(db)
                     self.big_dbs.append(db)
                     continue
+                if current_time > 200:
+                    try:
+
+                        is_working = self.driver.find_element(By.XPATH, '//*[@id="pharmit"]/div[1]/div[3]/div[1]/div')
+                    except NoSuchElementException:
+                        is_working = False
+                        print(f"Error in {db}")
+                    if not is_working:
+                        search_count += 1
+                        searched_dbs.append(db)
+                        self.big_dbs.append(db)
+                        continue
                 time.sleep(3)
                 if not last:
                     self.driver.switch_to.window(f"{self.db_list[0][n]}")
-                    try:
-                        self.driver.switch_to.alert.dismiss()
-                    except NoAlertPresentException:
-                        pass
                     if len(db_half) - search_count == 1:
                         last = True
                 minimize_button = self.driver.find_element(By.XPATH,
@@ -168,7 +176,11 @@ class PharmitControl:
                     searched_dbs.append(db)
                 if minimize_button.is_enabled():
                     self.driver.switch_to.window(f"{self.db_list[0][n]}")
-                    time.sleep(0.5)
+                    try:
+                        self.driver.switch_to.alert.dismiss()
+                    except NoAlertPresentException:
+                        pass
+                    time.sleep(1)
                     self._minimize(minimize_button, db)
                     search_count += 1
                     searched_dbs.append(db)
@@ -194,6 +206,15 @@ class PharmitControl:
         while True:
             try:
                 minimize_button.click()
+                try:
+                    time.sleep(1)
+                    self.driver.switch_to.alert.dismiss()
+                    time.sleep(1)
+                    minimize_button.click()
+                except NoAlertPresentException:
+                    print(f"No alert present {db}")
+                    pass
+                print(f"Minimizing {db}")
                 break
             except WebDriverException:
                 pass
@@ -263,6 +284,7 @@ class PharmitControl:
                 save_button.click()
                 break
             except WebDriverException:
+                print(f"Error downloading - {db}")
                 pass
         self.minimize_count += 1
 
@@ -271,8 +293,8 @@ class PharmitControl:
         if minimized_count == 0:
             return True
         while True:
-            print("PRESO NO CHECK FINISH")
             new_download_list = get_last_files('minimized_results*', old_download_list, minimized_count, check_download=True)
+            print(f"PRESO NO CHECK FINISH -- {len(new_download_list)} - minimized_count: {minimized_count}")
             if not check_downloads_complete(new_download_list):
                 continue
             else:
@@ -302,7 +324,7 @@ class PharmitControl:
         if run_lambdapipe == 0 and self.is_plip:
             self._hit_reduction(db)
         time.sleep(1)
-        self._search()
+        self._search(db)
 
     def _loops(self, db_half):
         self._search_loop(db_half)

@@ -4,9 +4,10 @@ from rdkit import RDLogger, Chem
 
 class SdfProcessor:
     """Selects the best molecules from sdf files"""
-    def __init__(self, minimize_count: int, top: int, output_folder_path: str, cli_rmsd: int = 7.0):
+    def __init__(self, minimize_count: int, top, output_folder_path: str, score: float, cli_rmsd: float):
         self.output_folder_path = output_folder_path
         self.top = top
+        self.score = score
         self.cli_rmsd = cli_rmsd
         self.minimize_count = minimize_count
         self.sdf_files = []
@@ -55,7 +56,7 @@ class SdfProcessor:
         """Check if the molecule is already in the analyzed_mol
         set and if it fits the threshold (score < -11 and rmsd < 7)"""
         if not mol_ids_set.intersection(self.analyzed_mol):
-            if score < -9 and rmsd <= self.cli_rmsd:
+            if score < self.score and rmsd <= self.cli_rmsd:
                 return True
 
     def _get_best_molecules_dict(self):
@@ -70,7 +71,7 @@ class SdfProcessor:
     def run_sdfprocessor(self):
         self._process_sdf()
         if self.best_molecules:
-            write_stats(f"\n\nNumber of molecules after filtering (Score < -9 and RMSD < {self.cli_rmsd}): "
+            write_stats(f"\n\nNumber of molecules after filtering (Score < {self.score} and RMSD < {self.cli_rmsd}): "
                         f"{len(self.best_molecules)}", self.output_folder_path)
             if len(self.best_molecules) > self.top:
                 self._get_top_molecules(self.top)

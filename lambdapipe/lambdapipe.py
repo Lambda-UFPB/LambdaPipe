@@ -11,7 +11,6 @@ Email: kdu.norat@gmail.com
 import click
 import time
 import asyncio
-import os
 from pharmit_control import PharmitControl
 from top_feature_configs import run_feature_configs
 from pharma_optimizer import PharmaOptimizer
@@ -29,6 +28,7 @@ from utils import (generate_folder_name, create_folders, create_stats_file, get_
 @click.argument("ligand_file", type=click.Path(exists=True), required=False)
 @click.option("-t", "--top", type=int, default=2000,
               help="The number of the top molecules by score to search in admetlab 2.0")
+@click.option("--score", type=float, default=-9.0, help="Score threshold for filtering the results")
 @click.option("-r", "--rmsd", type=float, default=7.0, help="RMSD threshold for filtering the results")
 @click.option("-p", "--pharma", is_flag=True, help="Prompt the user for additional input")
 @click.option("-s", "--session", type=str, help="Session file for pharmit search")
@@ -37,11 +37,11 @@ from utils import (generate_folder_name, create_folders, create_stats_file, get_
 @click.option("--process", type=str,
               help="Process the results on a specific folder without performing the search")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
-def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv, slow, process, output):
+def lambdapipe(receptor_file, ligand_file, top, score, rmsd, pharma, session, plip_csv, slow, process, output):
 
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
         raise click.BadParameter(
-            "You can't run --process with any other flag besides --top and --rmsd.")
+            "You can run --process only with the flags --top, --score and --rmsd.")
 
     if not process and (not session and (not receptor_file or not ligand_file)) or (session and (receptor_file or ligand_file)):
         raise click.BadParameter(
@@ -67,13 +67,13 @@ def lambdapipe(receptor_file, ligand_file, top, rmsd, pharma, session, plip_csv,
                                                                 pharmacophore_number)
         minimize_count = exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_number,
                                                 is_plip=plip_csv, fast=fast)
-        exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folder, rmsd, folder_name, start_time)
+        exec_lambdapipe_process(minimize_count, top, score, output_folder_path, admet_folder, rmsd, folder_name, start_time)
 
     else:
         admet_folder = f"{process}/admet"
         folder_name = process.split("/")[-1]
         output_folder_path = get_absolute_path(process)
-        exec_lambdapipe_process(0, top, output_folder_path, admet_folder, rmsd, folder_name, start_time, only_process=True)
+        exec_lambdapipe_process(0, top, score, output_folder_path, admet_folder, rmsd, folder_name, start_time, only_process=True)
 
 
 def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output_folder_path, old_download_list,
@@ -128,9 +128,9 @@ def exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_n
     return minimize_count
 
 
-def exec_lambdapipe_process(minimize_count, top, output_folder_path, admet_folder, rmsd, folder_name, start_time, only_process=False):
+def exec_lambdapipe_process(minimize_count, top, score, output_folder_path, admet_folder, rmsd, folder_name, start_time, only_process=False):
     click.echo("\nProcessing Results...")
-    sdfp = SdfProcessor(minimize_count, top, output_folder_path, rmsd)
+    sdfp = SdfProcessor(minimize_count, top, output_folder_path, score=score, cli_rmsd=rmsd)
     if not only_process:
         sdfp.get_sdfs()
     else:

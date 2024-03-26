@@ -45,10 +45,11 @@ class JsonHandler:
         button["enabled"] = not button["enabled"]
 
     def _pharma_set_parameters(self):
-        self.session["minMolWeight"] = 300
-        self.session["maxMolWeight"] = 700
-        self.session["maxlogp"] = 7
-        self.session["maxrotbonds"] = 7
+        self.session["maxMolWeight"] = 500
+        self.session["maxlogp"] = 6
+        self.session["maxrotbonds"] = 6
+        self.session["maxHBA"] = 12
+        self.session["maxHBD"] = 6
 
     @staticmethod
     def _generate_points_list(sphere_tuple: tuple):
