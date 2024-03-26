@@ -1,3 +1,5 @@
+import time
+
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -20,7 +22,7 @@ class PharmitControl:
         self.is_plip = None
         self.db_list = [['chembl', 'chemdiv', 'chemspace', 'molport', 'mcule'],
                         ['ultimate', 'enamine', 'pubchem', 'wuxi-lab', 'zinc']]
-        #self.db_list = [['nsc'],
+        #self.db_list = [['nsc', 'chembl', 'chemdiv', 'chemspace', 'molport'],
                         #['zinc']]
         self.hit_limit = {'chembl': 2, 'chemspace': 1, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 4}
         self.big_dbs = []
@@ -129,7 +131,7 @@ class PharmitControl:
                 pass
         while True:
             try:
-                self.driver.find_element(By.XPATH, '//*[@class="pharmit_heading pharmit_rightheading"]')
+                self.driver.find_element(By.XPATH, '//*[@class="pharmit_namecol sorting_disabled"]')
                 break
             except NoSuchElementException:
                 pass
@@ -176,10 +178,6 @@ class PharmitControl:
                     searched_dbs.append(db)
                 if minimize_button.is_enabled():
                     self.driver.switch_to.window(f"{self.db_list[0][n]}")
-                    try:
-                        self.driver.switch_to.alert.dismiss()
-                    except NoAlertPresentException:
-                        pass
                     time.sleep(1)
                     self._minimize(minimize_button, db)
                     search_count += 1
@@ -206,21 +204,20 @@ class PharmitControl:
         while True:
             try:
                 minimize_button.click()
-                try:
-                    time.sleep(1)
-                    self.driver.switch_to.alert.dismiss()
-                    time.sleep(1)
-                    minimize_button.click()
-                except NoAlertPresentException:
-                    print(f"No alert present {db}")
-                    pass
-                print(f"Minimizing {db}")
                 break
             except WebDriverException:
                 pass
-
+        # First alert
         try:
             self.driver.switch_to.alert.dismiss()
+            # Second alert
+            try:
+                time.sleep(1)
+                self.driver.switch_to.alert.dismiss()
+                time.sleep(1)
+                minimize_button.click()
+            except NoAlertPresentException:
+                pass
         except NoAlertPresentException:
             pass
 
