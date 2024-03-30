@@ -3,7 +3,7 @@ LambdaPipe is a program that uses the pharmit webserver  and admetlab 2.0 in an 
 the best molecules for a given target.
 
 Author: Carlos Eduardo Norat
-Github: https://github.com/kdunorat
+GitHub: https://github.com/kdunorat
 Email: kdu.norat@gmail.com
 
 """
@@ -59,7 +59,7 @@ def lambdapipe(receptor_file, ligand_file, top, score, rmsd, pharma, session, pl
             fast = True
         folder_name = output if output else generate_folder_name()
         try:
-            output_folder_path, admet_folder, old_download_list = create_folder(folder_name)
+            output_folder_path, old_download_list = create_folder(folder_name)
         except FileExistsError:
             click.echo(f"The folder {folder_name} already exists. Please provide a different name.")
             return
@@ -69,13 +69,12 @@ def lambdapipe(receptor_file, ligand_file, top, score, rmsd, pharma, session, pl
                                                                 pharmacophore_number)
         minimize_count = exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_number,
                                                 is_plip=plip_csv, fast=fast)
-        exec_lambdapipe_process(minimize_count, top, score, output_folder_path, admet_folder, rmsd, folder_name, start_time)
+        exec_lambdapipe_process(minimize_count, top, score, output_folder_path, rmsd, folder_name, start_time)
 
     else:
-        admet_folder = f"{process}/admet"
         folder_name = process.split("/")[-1]
         output_folder_path = get_absolute_path(process)
-        exec_lambdapipe_process(0, top, score, output_folder_path, admet_folder, rmsd, folder_name, start_time, only_process=True)
+        exec_lambdapipe_process(0, top, score, output_folder_path, rmsd, folder_name, start_time, only_process=True)
 
 
 def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output_folder_path, old_download_list,
@@ -130,7 +129,7 @@ def exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_n
     return minimize_count
 
 
-def exec_lambdapipe_process(minimize_count, top, score, output_folder_path, admet_folder, rmsd, folder_name, start_time, only_process=False):
+def exec_lambdapipe_process(minimize_count, top, score, output_folder_path, rmsd, folder_name, start_time, only_process=False):
     click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, score=score, cli_rmsd=rmsd)
     if not only_process:
@@ -141,14 +140,13 @@ def exec_lambdapipe_process(minimize_count, top, score, output_folder_path, adme
 
     click.echo("\nGetting ADMET info...")
     try:
-        smiles_list = asyncio.run(asyncio.wait_for(run_admet_request(dict_final, output_folder_path), timeout=120000))
+        molecules_dict_list = asyncio.run(asyncio.wait_for(run_admet_request(dict_final), timeout=120000))
     except AdmetServerError:
         click.echo("\nError: ADMET server is down. Please try again later using lambdapipe --process.")
         return
-    merge_csv(admet_folder)
 
     click.echo("\nGenerating final results...")
-    analyzer = AdmetAnalyzer(output_folder_path, admet_folder, dict_final, smiles_list)
+    analyzer = AdmetAnalyzer(output_folder_path, dict_final, molecules_dict_list)
     analyzer.run_admet_analyzer()
     results_to_html(output_folder_path, folder_name)
 
@@ -160,10 +158,9 @@ def exec_lambdapipe_process(minimize_count, top, score, output_folder_path, adme
 def create_folder(folder_name):
     output_folder_path = create_folders(folder_name)
     create_stats_file(output_folder_path)
-    admet_folder = f"{output_folder_path}/admet"
     old_download_list = get_download_list('pharmit*.json*')
 
-    return output_folder_path, admet_folder, old_download_list
+    return output_folder_path, old_download_list
 
 
 def creating_complex(receptor_file, ligand_file, output_folder_path, old_download_list):
