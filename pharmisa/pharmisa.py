@@ -27,7 +27,7 @@ from pharmisa.exceptions import AdmetServerError
 @click.command()
 @click.argument("receptor_file", type=click.Path(exists=True), required=False)
 @click.argument("ligand_file", type=click.Path(exists=True), required=False)
-@click.option("-t", "--top", type=int, default=2000,
+@click.option("-t", "--top", type=int, default=5000,
               help="The number of the top molecules by score to search in admetlab 2.0")
 @click.option("--score", type=float, default=-9.0, help="Score threshold for filtering the results")
 @click.option("-r", "--rmsd", type=float, default=7.0, help="RMSD threshold for filtering the results")
