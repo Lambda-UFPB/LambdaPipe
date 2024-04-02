@@ -6,7 +6,7 @@ import gzip
 import pandas as pd
 import re
 import time
-from exceptions import InvalidInputError
+from .exceptions import InvalidInputError
 
 
 def get_absolute_path(path: str):
@@ -103,9 +103,8 @@ def get_download_list(file_pattern: str):
     return download_list
 
 
-def get_last_files(file_pattern: str, old_download_list: list = None, minimize_count: int = None, check_download = False):
+def get_last_files(file_pattern: str, old_download_list: list = None, minimize_count: int = None, check_download=False):
     most_recent = ''
-    still_downloading = True
     if not old_download_list:
         old_download_list = []
     while True:

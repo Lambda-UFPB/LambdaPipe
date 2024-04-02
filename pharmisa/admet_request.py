@@ -1,9 +1,7 @@
 import requests
 from aiohttp import ClientSession, ClientTimeout
 import asyncio
-import timeit
 import urllib3
-import json
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -68,13 +66,3 @@ async def run_admet_request(best_molecules_dict: dict):
     final_mol_list = [mol for sublist in responses for mol in sublist]
 
     return final_mol_list
-if __name__ == "__main__":
-    output_folder = "/home/kdunorat/PycharmProjects/LambdaPipe/files/testedefinitivo"
-    with open('/home/kdunorat/Projetos/LambdaPipe/lambdapipe/teste_new.json', 'r') as j:
-        dict_final = json.load(j)
-    start_time = timeit.default_timer()
-    final_mol_list1 = asyncio.run(asyncio.wait_for(run_admet_request(dict_final), timeout=120000))
-    end_time = timeit.default_timer()
-    execution_time = end_time - start_time
-    print(f"The function took {execution_time} seconds to complete")
-

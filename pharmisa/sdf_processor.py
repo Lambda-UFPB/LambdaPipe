@@ -81,9 +81,3 @@ class SdfProcessor:
             raise ValueError('No molecules that fit the threshold found in the .sdf files')
         
         return self._get_best_molecules_dict()
-
-
-if __name__ == '__main__':
-    sdf = SdfProcessor(30, 2000, "/home/kdunorat/lambdapipe_results/7DK5-272")
-    dict_final = sdf.run_sdfprocessor()
-    print(dict_final)

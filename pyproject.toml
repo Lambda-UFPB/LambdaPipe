@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "lambdapipe"
-version = "0.7.0"
+name = "pharmisa"
+version = "1.0.0"
 description = "Pipeline for LAMBDA-UFPB"
 authors = ["kdunorat <kdu.norat@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.scripts]
-lambdapipe = 'lambdapipe.lambdapipe:lambdapipe'
+pharmisa = 'pharmisa.pharmisa:pharmisa'
 
 [tool.poetry.dependencies]
 python = "^3.10"

@@ -1,5 +1,5 @@
 """
-LambdaPipe is a program that uses the pharmit webserver  and admetlab 2.0 in an integrated pipeline to find
+PharMisa is a program that uses the pharmit webserver  and admetlab 2.0 in an integrated pipeline to find
 the best molecules for a given target.
 
 Author: Carlos Eduardo Norat
@@ -11,17 +11,17 @@ Email: kdu.norat@gmail.com
 import click
 import time
 import asyncio
-from pharmit_control import PharmitControl
-from top_feature_configs import run_feature_configs
-from pharma_optimizer import PharmaOptimizer
-from json_handler import JsonHandler
-from sdf_processor import SdfProcessor
-from admet_request import run_admet_request
-from admet_analyzer import AdmetAnalyzer
-from get_html import results_to_html
-from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
-                   get_absolute_path, get_minimized_results_files_list, write_stats, merge_csv)
-from exceptions import AdmetServerError
+from pharmisa.pharmit_control import PharmitControl
+from pharmisa.top_feature_configs import run_feature_configs
+from pharmisa.pharma_optimizer import PharmaOptimizer
+from pharmisa.json_handler import JsonHandler
+from pharmisa.sdf_processor import SdfProcessor
+from pharmisa.admet_request import run_admet_request
+from pharmisa.admet_analyzer import AdmetAnalyzer
+from pharmisa.get_html import results_to_html
+from pharmisa.utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
+                            get_absolute_path, get_minimized_results_files_list, write_stats)
+from pharmisa.exceptions import AdmetServerError
 
 
 @click.command()
@@ -38,14 +38,15 @@ from exceptions import AdmetServerError
 @click.option("--process", type=str,
               help="Process the results on a specific folder without performing the search")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
-@click.version_option("0.9.0")
-def lambdapipe(receptor_file, ligand_file, top, score, rmsd, pharma, session, plip_csv, slow, process, output):
+@click.version_option("1.0.0")
+def pharmisa(receptor_file, ligand_file, top, score, rmsd, pharma, session, plip_csv, slow, process, output):
 
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
         raise click.BadParameter(
             "You can run --process only with the flags --top, --score and --rmsd.")
 
-    if not process and (not session and (not receptor_file or not ligand_file)) or (session and (receptor_file or ligand_file)):
+    if not process and (not session and (not receptor_file or not ligand_file)) or (session and (receptor_file or
+                                                                                                 ligand_file)):
         raise click.BadParameter(
             "You must provide either a session or both a receptor file and a ligand file.")
     if (plip_csv and session) or (plip_csv and pharma):
@@ -67,14 +68,14 @@ def lambdapipe(receptor_file, ligand_file, top, score, rmsd, pharma, session, pl
         phc, new_session, pharmacophore_number = search_prepare(receptor_file, ligand_file, pharma, session, plip_csv,
                                                                 output_folder_path, old_download_list,
                                                                 pharmacophore_number)
-        minimize_count = exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_number,
-                                                is_plip=plip_csv, fast=fast)
-        exec_lambdapipe_process(minimize_count, top, score, output_folder_path, rmsd, folder_name, start_time)
+        minimize_count = exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_number,
+                                              is_plip=plip_csv, fast=fast)
+        exec_pharmisa_process(minimize_count, top, score, output_folder_path, rmsd, folder_name, start_time)
 
     else:
         folder_name = process.split("/")[-1]
         output_folder_path = get_absolute_path(process)
-        exec_lambdapipe_process(0, top, score, output_folder_path, rmsd, folder_name, start_time, only_process=True)
+        exec_pharmisa_process(0, top, score, output_folder_path, rmsd, folder_name, start_time, only_process=True)
 
 
 def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output_folder_path, old_download_list,
@@ -105,7 +106,7 @@ def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output
     return phc, new_session, pharmacophore_number
 
 
-def exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_number, is_plip, fast=False):
+def exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_number, is_plip, fast=False):
 
     minimize_count = 0
     pharmacophore_number = 3 if pharmacophore_number else pharmacophore_number
@@ -121,7 +122,7 @@ def exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_n
             pharmacophore_number += 1
         else:
             write_stats(f"\nHits:\n", output_folder_path)
-        minimize_count += phc.run_pharmit_search(session, run_lambdapipe=index, quit_now=quit_now, is_plip=is_plip,
+        minimize_count += phc.run_pharmit_search(session, run_pharmisa=index, quit_now=quit_now, is_plip=is_plip,
                                                  fast=fast)
         phc.no_results = []
         phc.minimize_count = 0
@@ -129,7 +130,8 @@ def exec_lambdapipe_search(new_session, phc, output_folder_path, pharmacophore_n
     return minimize_count
 
 
-def exec_lambdapipe_process(minimize_count, top, score, output_folder_path, rmsd, folder_name, start_time, only_process=False):
+def exec_pharmisa_process(minimize_count, top, score, output_folder_path, rmsd, folder_name, start_time,
+                          only_process=False):
     click.echo("\nProcessing Results...")
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, score=score, cli_rmsd=rmsd)
     if not only_process:
@@ -142,7 +144,7 @@ def exec_lambdapipe_process(minimize_count, top, score, output_folder_path, rmsd
     try:
         molecules_dict_list = asyncio.run(asyncio.wait_for(run_admet_request(dict_final), timeout=120000))
     except AdmetServerError:
-        click.echo("\nError: ADMET server is down. Please try again later using lambdapipe --process.")
+        click.echo("\nError: ADMET server is down. Please try again later using pharmisa --process.")
         return
 
     click.echo("\nGenerating final results...")
@@ -185,4 +187,4 @@ def pharmacophore_selection_menu(jsh):
 
 
 if __name__ == "__main__":
-    lambdapipe()
+    pharmisa()

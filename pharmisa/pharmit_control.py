@@ -20,8 +20,6 @@ class PharmitControl:
         self.is_plip = None
         self.db_list = [['chembl', 'chemdiv', 'chemspace', 'molport', 'mcule'],
                         ['ultimate', 'enamine', 'pubchem', 'wuxi-lab', 'zinc']]
-        #self.db_list = [['nsc', 'chembl', 'chemdiv', 'chemspace', 'molport'],
-                        #['zinc']]
         self.hit_limit = {'chembl': 2, 'chemspace': 1, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 4}
         self.big_dbs = []
         self.modified_json_path = ''
@@ -94,7 +92,8 @@ class PharmitControl:
                 time.sleep(0.4)
                 while True:
                     try:
-                        self.driver.find_element(By.XPATH, '//*[@id="ui-id-8"]/table/tbody/tr[1]/td[2]/span/a[1]').click()
+                        self.driver.find_element(By.XPATH,
+                                                 '//*[@id="ui-id-8"]/table/tbody/tr[1]/td[2]/span/a[1]').click()
                         break
                     except ElementNotInteractableException:
                         pass
@@ -288,7 +287,8 @@ class PharmitControl:
         if minimized_count == 0:
             return True
         while True:
-            new_download_list = get_last_files('minimized_results*', old_download_list, minimized_count, check_download=True)
+            new_download_list = get_last_files('minimized_results*', old_download_list, minimized_count,
+                                               check_download=True)
             print(f"PRESO NO CHECK FINISH -- {len(new_download_list)} - minimized_count: {minimized_count}")
             if not check_downloads_complete(new_download_list):
                 continue
@@ -299,24 +299,24 @@ class PharmitControl:
                     time.sleep(1)
         return True
 
-    def _run_fast(self, run_lambdapipe):
+    def _run_fast(self, run_pharmisa):
         for index, db in enumerate(self.db_list[0]):
-            self._run_chain(db, index, run_lambdapipe, 0)
+            self._run_chain(db, index, run_pharmisa, 0)
         self._loops(self.db_list[0])
 
-    def _run_slow(self, run_lambdapipe):
+    def _run_slow(self, run_pharmisa):
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
-                self._run_chain(db, count, run_lambdapipe, run)
+                self._run_chain(db, count, run_pharmisa, run)
             self._loops(db_half)
 
-    def _run_chain(self, db, index, run_lambdapipe, run):
-        if run_lambdapipe == 0 or run == 0:
+    def _run_chain(self, db, index, run_pharmisa, run):
+        if run_pharmisa == 0 or run == 0:
             self._open_tab(index, db)
         time.sleep(1)
         self._upload_json(n=index, json_path=self.modified_json_path)
         self._change_db(run, index, db)
-        if run_lambdapipe == 0 and self.is_plip:
+        if run_pharmisa == 0 and self.is_plip:
             self._hit_reduction(db)
         time.sleep(1)
         self._search(db)
@@ -325,16 +325,16 @@ class PharmitControl:
         self._search_loop(db_half)
         self._download_loop(db_half)
 
-    def run_pharmit_search(self, modified_json_path, run_lambdapipe, quit_now=False, is_plip=None, fast=False):
+    def run_pharmit_search(self, modified_json_path, run_pharmisa, quit_now=False, is_plip=None, fast=False):
         old_download_list = get_download_list('minimized_results*')
         self.modified_json_path = modified_json_path
         self.is_plip = is_plip
         if fast:
-            if run_lambdapipe == 0:
+            if run_pharmisa == 0:
                 self.db_list = [self.db_list[0] + self.db_list[1]]
-            self._run_fast(run_lambdapipe)
+            self._run_fast(run_pharmisa)
         else:
-            self._run_slow(run_lambdapipe)
+            self._run_slow(run_pharmisa)
 
         if PharmitControl.check_finished_download(self.minimize_count, old_download_list):
             if quit_now:

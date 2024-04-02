@@ -1,8 +1,5 @@
-import pandas as pd
-import ast
-from utils import *
-from exceptions import NoMoleculeError
-import json
+from .utils import *
+from .exceptions import NoMoleculeError
 
 
 class AdmetAnalyzer:
@@ -58,19 +55,3 @@ class AdmetAnalyzer:
                     f"Best score after admet research: {best_score}", self.output_folder_path)
 
         self.admet_df.to_csv(f'{self.results_path}/admet_filtered.csv', index=False)
-
-
-if __name__ == '__main__':
-    output_folder = "/home/kdunorat/lambdapipe_results/testedefinitivo"
-    with open('final_mol_list.txt', 'r') as f:
-        list_from_file = []
-        for line in f:
-            dict_from_line = ast.literal_eval(line)
-            list_from_file.append(dict_from_line)
-
-    with open('/home/kdunorat/Projetos/LambdaPipe/lambdapipe/teste_new.json', 'r') as j:
-        dict_final = json.load(j)
-    adma = AdmetAnalyzer(output_folder, dict_final, list_from_file)
-    adma.run_admet_analyzer()
-
-
