@@ -26,11 +26,12 @@ def calculate_score(row):
 
     # Give more weight to 'SA-score' and 'Pfizer'
     pfizer_weight = 3 if pfizer == 1 else 1
+    rules_weight = 7.5
 
     # Decrease the score as the toxicity decreases
     toxicity_score = 2 / (mean_toxicity + std_toxicity)
 
-    score = (sa_score + pfizer_weight * pfizer + rules_score) - toxicity_score
+    score = (sa_score + pfizer_weight * pfizer + rules_score * rules_weight) - toxicity_score
     return score
 
 
@@ -70,4 +71,4 @@ def results_to_html(output_folder_path: str, folder_name: str):
 
 
 if __name__ == '__main__':
-    results_to_html("/home/kdunorat/lambdapipe_results/7KR1-3-CID87", "7KR1-3-CID87")
+    results_to_html("/home/kdunorat/lambdapipe_results/7DK5-272", "newww")
