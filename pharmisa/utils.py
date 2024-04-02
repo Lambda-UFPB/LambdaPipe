@@ -52,7 +52,7 @@ def get_minimized_results_files_list(directory_path):
 
 
 def create_folders(folder_name: str):
-    main_directory_path = os.path.expanduser(f"~/lambdapipe_results")
+    main_directory_path = os.path.expanduser(f"~/pharmisa_results")
     if not os.path.exists(main_directory_path):
         os.makedirs(main_directory_path, exist_ok=True)
     output_folder_path = os.path.join(main_directory_path, folder_name)

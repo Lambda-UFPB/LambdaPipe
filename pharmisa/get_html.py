@@ -71,4 +71,4 @@ def results_to_html(output_folder_path: str, folder_name: str):
 
 
 if __name__ == '__main__':
-    results_to_html("/home/kdunorat/lambdapipe_results/7DK5-272", "newww")
+    results_to_html("/home/kdunorat/lambdapipe_results/7KR1-3-CID87", "newww")
