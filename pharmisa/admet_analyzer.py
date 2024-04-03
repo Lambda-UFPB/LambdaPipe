@@ -1,26 +1,49 @@
-from .utils import *
-from .exceptions import NoMoleculeError
+from utils import *
+from exceptions import NoMoleculeError
 
 
 class AdmetAnalyzer:
     def __init__(self, output_folder_path: str, best_molecules_dict: dict, list_mol: list):
         self.output_folder_path = output_folder_path
-        columns = ['id', 'smiles', 'hERG', 'DILI', 'Ames', 'ROA', 'FDAMDD', 'SkinSen', 'Carcinogenicity',
-                   'EC', 'EI', 'Respiratory', 'H-HT', 'Neurotoxicity-DI', 'Ototoxicity',
-                   'Hematotoxicity', 'Nephrotoxicity-DI', 'Genotoxicity', 'NR-AhR', 'NR-AR', 'NR-AR-LBD',
-                   'NR-Aromatase', 'NR-ER', 'NR-ER-LBD',
-                   'NR-PPAR-gamma', 'SR-ARE', 'SR-ATAD5', 'SR-HSE', 'SR-MMP', 'SR-p53', 'Synth', 'Lipinski', 'Pfizer',
-                   'GSK', 'GoldenTriangle']
-        self.admet_df = pd.DataFrame(list_mol, columns=columns)
+        self.admet_df = pd.DataFrame(list_mol)
+        self._selected_columns()
         self.admet_df = self.admet_df.rename(columns={'id': 'Molecule ID', 'smiles': 'SMILES', 'Synth': 'SA-score'})
         self.results_path = f"{output_folder_path}/results"
         self.best_molecules_dict = best_molecules_dict
 
+    def _selected_columns(self):
+        all_columns = self.admet_df.columns
+        final_columns = ['id']
+        metabolism = all_columns[54:68].tolist()
+        excretion = all_columns[68:70].tolist()
+        distribution = all_columns[45:54].tolist()
+        absortion = all_columns[36:45].tolist()
+        medicinal = all_columns[15:29].tolist()
+        medicinal_2 = ['Aggregators', 'Fluc',
+                       'Blue_fluorescence', 'Green_fluorescence', 'Reactive', 'Promiscuous']
+        medicinal.extend(medicinal_2)
+        toxi_rules = ['NonBiodegradable', 'NonGenotoxic_Carcinogenicity', 'SureChEMBL', 'Skin_Sensitization',
+                      'Acute_Aquatic_Toxicity',
+                      'Toxicophores', 'Genotoxic_Carcinogenicity_Mutagenicity']
+        toxicity = all_columns[70:94].tolist()
+        tox21 = all_columns[94:106].tolist()
+        smiles = all_columns[0]
+        final_columns.extend(medicinal)
+        final_columns.extend(absortion)
+        final_columns.extend(distribution)
+        final_columns.extend(metabolism)
+        final_columns.extend(excretion)
+        final_columns.extend(toxi_rules)
+        final_columns.extend(toxicity)
+        final_columns.extend(tox21)
+        final_columns.append(smiles)
+        self.admet_df = self.admet_df[final_columns]
+
     def _filter_conditions(self):
-        condition1 = (self.admet_df.iloc[:, 1:17].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 4
-        condition2 = (self.admet_df.iloc[:, 17:29].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 6
+        condition1 = (self.admet_df.iloc[:, 62:86].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 4
+        condition2 = (self.admet_df.iloc[:, 86:98].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 6
         condition3 = self.admet_df['Respiratory'] < 0.7
-        condition4 = (self.admet_df.iloc[:, 30:].select_dtypes(include=['int64']) > 0).sum(axis=1) >= 1
+        condition4 = (self.admet_df.iloc[:, 11:15].select_dtypes(include=['int64']) > 0).sum(axis=1) >= 1
         combined_condition = condition1 & condition2 & condition3 & condition4
 
         self.admet_df = self.admet_df[combined_condition]
@@ -40,11 +63,6 @@ class AdmetAnalyzer:
         self.admet_df['Molecule ID'] = self.admet_df['Molecule ID'].str.split(' ', n=1, expand=True)[0]
         cols = ['Molecule ID'] + [col for col in self.admet_df if col != 'Molecule ID']
         self.admet_df = self.admet_df[cols]
-
-    @staticmethod
-    def _write_best_molecule_after(self):
-        best_molecules_df = pd.DataFrame(self.best_molecules_dict).T
-        best_molecules_df.to_csv(f'{self.results_path}/best_molecules.csv', index=True)
 
     def run_admet_analyzer(self):
         self._filter_conditions()

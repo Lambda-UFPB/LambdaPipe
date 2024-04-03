@@ -11,17 +11,17 @@ Email: kdu.norat@gmail.com
 import click
 import time
 import asyncio
-from pharmisa.pharmit_control import PharmitControl
-from pharmisa.top_feature_configs import run_feature_configs
-from pharmisa.pharma_optimizer import PharmaOptimizer
-from pharmisa.json_handler import JsonHandler
-from pharmisa.sdf_processor import SdfProcessor
-from pharmisa.admet_request import run_admet_request
-from pharmisa.admet_analyzer import AdmetAnalyzer
-from pharmisa.get_html import results_to_html
-from pharmisa.utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
+from pharmit_control import PharmitControl
+from top_feature_configs import run_feature_configs
+from pharma_optimizer import PharmaOptimizer
+from json_handler import JsonHandler
+from sdf_processor import SdfProcessor
+from admet_request import run_admet_request
+from admet_analyzer import AdmetAnalyzer
+from get_html import results_to_html
+from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
                             get_absolute_path, get_minimized_results_files_list, write_stats)
-from pharmisa.exceptions import AdmetServerError
+from exceptions import AdmetServerError
 
 
 @click.command()
