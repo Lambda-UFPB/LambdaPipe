@@ -1,5 +1,7 @@
 from utils import *
 from exceptions import NoMoleculeError
+import ast
+import json
 
 
 class AdmetAnalyzer:
@@ -12,21 +14,21 @@ class AdmetAnalyzer:
         self.best_molecules_dict = best_molecules_dict
 
     def _selected_columns(self):
-        all_columns = self.admet_df.columns
+        all_columns = self.admet_df.columns.tolist()
         final_columns = ['id']
-        metabolism = all_columns[54:68].tolist()
-        excretion = all_columns[68:70].tolist()
-        distribution = all_columns[45:54].tolist()
-        absortion = all_columns[36:45].tolist()
-        medicinal = all_columns[15:29].tolist()
+        metabolism = all_columns[54:68]
+        excretion = all_columns[68:70]
+        distribution = all_columns[45:54]
+        absortion = all_columns[36:45]
+        medicinal = all_columns[15:29]
         medicinal_2 = ['Aggregators', 'Fluc',
                        'Blue_fluorescence', 'Green_fluorescence', 'Reactive', 'Promiscuous']
         medicinal.extend(medicinal_2)
         toxi_rules = ['NonBiodegradable', 'NonGenotoxic_Carcinogenicity', 'SureChEMBL', 'Skin_Sensitization',
                       'Acute_Aquatic_Toxicity',
                       'Toxicophores', 'Genotoxic_Carcinogenicity_Mutagenicity']
-        toxicity = all_columns[70:94].tolist()
-        tox21 = all_columns[94:106].tolist()
+        toxicity = all_columns[70:94]
+        tox21 = all_columns[94:106]
         smiles = all_columns[0]
         final_columns.extend(medicinal)
         final_columns.extend(absortion)
@@ -40,11 +42,10 @@ class AdmetAnalyzer:
         self.admet_df = self.admet_df[final_columns]
 
     def _filter_conditions(self):
-        condition1 = (self.admet_df.iloc[:, 62:86].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 4
-        condition2 = (self.admet_df.iloc[:, 86:98].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 6
+        condition1 = (self.admet_df.iloc[:, 62:86].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 6
+        condition2 = (self.admet_df.iloc[:, 86:98].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 7
         condition3 = self.admet_df['Respiratory'] < 0.7
-        condition4 = (self.admet_df.iloc[:, 11:15].select_dtypes(include=['int64']) > 0).sum(axis=1) >= 1
-        combined_condition = condition1 & condition2 & condition3 & condition4
+        combined_condition = condition1 & condition2 & condition3
 
         self.admet_df = self.admet_df[combined_condition]
         if self.admet_df.empty:
@@ -65,7 +66,7 @@ class AdmetAnalyzer:
         self.admet_df = self.admet_df[cols]
 
     def run_admet_analyzer(self):
-        self._filter_conditions()
+        #self._filter_conditions()
         self._get_score_and_rmsd()
         best_score = self.admet_df['Score Pharmit'].min()
         num_molecules = self.admet_df.shape[0]
@@ -73,3 +74,13 @@ class AdmetAnalyzer:
                     f"Best score after admet research: {best_score}", self.output_folder_path)
 
         self.admet_df.to_csv(f'{self.results_path}/admet_filtered.csv', index=False)
+
+
+if __name__ == '__main__':
+    output_folder = '/home/kdunorat/lambdapipe_results/7KR1-3-CID87'
+    with open('molecules_dict_list.txt', 'r') as f:
+        list_from_file = ast.literal_eval(f.read())
+    with open('dict_final.json', 'r') as f:
+        dict_final = json.load(f)
+    analyzer = AdmetAnalyzer(output_folder, dict_final, list_from_file)
+    analyzer.run_admet_analyzer()

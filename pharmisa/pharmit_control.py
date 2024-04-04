@@ -122,7 +122,6 @@ class PharmitControl:
             try:
                 search.click()
                 time.sleep(1)
-                print(f"searching {db}")
                 break
             except WebDriverException:
                 pass
@@ -153,11 +152,9 @@ class PharmitControl:
                     continue
                 if current_time > 200:
                     try:
-
                         is_working = self.driver.find_element(By.XPATH, '//*[@id="pharmit"]/div[1]/div[3]/div[1]/div')
                     except NoSuchElementException:
                         is_working = False
-                        print(f"Error in {db}")
                     if not is_working:
                         search_count += 1
                         searched_dbs.append(db)
@@ -289,7 +286,6 @@ class PharmitControl:
         while True:
             new_download_list = get_last_files('minimized_results*', old_download_list, minimized_count,
                                                check_download=True)
-            print(f"PRESO NO CHECK FINISH -- {len(new_download_list)} - minimized_count: {minimized_count}")
             if not check_downloads_complete(new_download_list):
                 continue
             else:

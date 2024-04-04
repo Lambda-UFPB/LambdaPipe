@@ -11,6 +11,7 @@ Email: kdu.norat@gmail.com
 import click
 import time
 import asyncio
+import json
 from pharmit_control import PharmitControl
 from top_feature_configs import run_feature_configs
 from pharma_optimizer import PharmaOptimizer
@@ -19,9 +20,8 @@ from sdf_processor import SdfProcessor
 from admet_request import run_admet_request
 from admet_analyzer import AdmetAnalyzer
 from get_html import results_to_html
-from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
-                            get_absolute_path, get_minimized_results_files_list, write_stats)
-from exceptions import AdmetServerError
+from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list, get_absolute_path, get_minimized_results_files_list, write_stats)
+from exceptions import AdmetServerError, NoMoleculeError
 
 
 @click.command()
@@ -139,23 +139,32 @@ def exec_pharmisa_process(minimize_count, top, score, output_folder_path, rmsd, 
     else:
         sdfp.sdf_files = get_minimized_results_files_list(output_folder_path)
     dict_final = sdfp.run_sdfprocessor()
+    with open(f'dict_final.json', 'w') as f:
+        f.write(json.dumps(dict_final))
 
     click.echo("\nGetting ADMET info...")
     try:
         molecules_dict_list = asyncio.run(asyncio.wait_for(run_admet_request(dict_final), timeout=120000))
+        with open('molecules_dict_list.txt', 'w') as f:
+            f.write(json.dumps(molecules_dict_list))
+
     except AdmetServerError:
         click.echo("\nError: ADMET server is down. Please try again later using pharmisa --process.")
         return
-
+    """
     click.echo("\nGenerating final results...")
     analyzer = AdmetAnalyzer(output_folder_path, dict_final, molecules_dict_list)
-    analyzer.run_admet_analyzer()
-    results_to_html(output_folder_path, folder_name)
+    try:
+        analyzer.run_admet_analyzer()
+    except NoMoleculeError:
+        click.echo("\nNo molecules passed the admet filter")
+        return
+    #results_to_html(output_folder_path, folder_name)
 
     click.echo(f"\nGo to {output_folder_path} to see the final results")
     elapsed_time = time.time()
     click.echo(f"\n\nAnalysis Completed\n{(elapsed_time - start_time)/60:.2f} minutes")
-
+"""
 
 def create_folder(folder_name):
     output_folder_path = create_folders(folder_name)
