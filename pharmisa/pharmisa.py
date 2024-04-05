@@ -151,7 +151,6 @@ def exec_pharmisa_process(minimize_count, top, score, output_folder_path, rmsd, 
     except AdmetServerError:
         click.echo("\nError: ADMET server is down. Please try again later using pharmisa --process.")
         return
-    """
     click.echo("\nGenerating final results...")
     analyzer = AdmetAnalyzer(output_folder_path, dict_final, molecules_dict_list)
     try:
@@ -159,12 +158,12 @@ def exec_pharmisa_process(minimize_count, top, score, output_folder_path, rmsd, 
     except NoMoleculeError:
         click.echo("\nNo molecules passed the admet filter")
         return
-    #results_to_html(output_folder_path, folder_name)
+    results_to_html(output_folder_path, folder_name)
 
     click.echo(f"\nGo to {output_folder_path} to see the final results")
     elapsed_time = time.time()
     click.echo(f"\n\nAnalysis Completed\n{(elapsed_time - start_time)/60:.2f} minutes")
-"""
+
 
 def create_folder(folder_name):
     output_folder_path = create_folders(folder_name)
