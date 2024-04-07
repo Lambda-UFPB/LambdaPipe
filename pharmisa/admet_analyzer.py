@@ -41,16 +41,6 @@ class AdmetAnalyzer:
         final_columns.append(smiles)
         self.admet_df = self.admet_df[final_columns]
 
-    def _filter_conditions(self):
-        condition1 = (self.admet_df.iloc[:, 62:86].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 6
-        condition2 = (self.admet_df.iloc[:, 86:98].select_dtypes(include=['float64']) > 0.3).sum(axis=1) <= 7
-        condition3 = self.admet_df['Respiratory'] < 0.7
-        combined_condition = condition1 & condition2 & condition3
-
-        self.admet_df = self.admet_df[combined_condition]
-        if self.admet_df.empty:
-            raise NoMoleculeError("No molecules passed the admet filter")
-
     def _get_score_and_rmsd(self):
         score = []
         rmsd = []
@@ -66,7 +56,6 @@ class AdmetAnalyzer:
         self.admet_df = self.admet_df[cols]
 
     def run_admet_analyzer(self):
-        #self._filter_conditions()
         self._get_score_and_rmsd()
         best_score = self.admet_df['Score Pharmit'].min()
         num_molecules = self.admet_df.shape[0]
