@@ -141,13 +141,13 @@ def exec_pharmisa_process(minimize_count, top, score, output_folder_path, rmsd, 
     dict_final = sdfp.run_sdfprocessor()
     with open(f'dict_final.json', 'w') as f:
         f.write(json.dumps(dict_final))
-
+    """
     click.echo("\nGetting ADMET info...")
     try:
         molecules_dict_list = asyncio.run(asyncio.wait_for(run_admet_request(dict_final), timeout=120000))
         with open('molecules_dict_list.txt', 'w') as f:
             f.write(json.dumps(molecules_dict_list))
-
+            
     except AdmetServerError:
         click.echo("\nError: ADMET server is down. Please try again later using pharmisa --process.")
         return
@@ -161,6 +161,8 @@ def exec_pharmisa_process(minimize_count, top, score, output_folder_path, rmsd, 
     results_to_html(output_folder_path, folder_name)
 
     click.echo(f"\nGo to {output_folder_path} to see the final results")
+    
+    """
     elapsed_time = time.time()
     click.echo(f"\n\nAnalysis Completed\n{(elapsed_time - start_time)/60:.2f} minutes")
 
