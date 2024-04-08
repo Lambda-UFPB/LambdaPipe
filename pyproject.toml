@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pharmisa"
-version = "1.2.0"
+version = "1.2.2"
 description = "Pipeline for LAMBDA-UFPB"
 authors = ["kdunorat <kdu.norat@gmail.com>"]
 readme = "README.md"

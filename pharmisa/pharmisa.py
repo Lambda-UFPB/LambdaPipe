@@ -37,7 +37,7 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 @click.option("--process", type=str,
               help="Process the results on a specific folder without performing the search")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
-@click.version_option("1.2.0")
+@click.version_option("1.2.2")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, output):
 
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
