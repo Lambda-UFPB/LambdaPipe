@@ -94,8 +94,7 @@ def run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters):
 def run_fpadmet(dict_final, output_folder_path):
     fpadmet_path = '/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet'
     script_path = f'{fpadmet_path}/runadmet.sh'
-    #smi_input_file = create_fpadmet_input_file(dict_final, output_folder_path)
-    smi_input_file = '/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet-backup/mols.smi'
+    smi_input_file = create_fpadmet_input_file(dict_final, output_folder_path)
     tox_parameters = [4, 6, 7, 8, 10, 17, 25, 29, 35, 40]
     fpadmet_df = run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters)
     fpadmet_df = get_fpadmet_score(fpadmet_df)
