@@ -33,28 +33,27 @@ def get_fpadmet_score(df):
     }
     all_columns = df.columns
     tox_columns = [col for col in all_columns if 'Predicted' in col]
-    tox_columns.remove('Predicted_56')
-    for col in tox_columns:
+    tox_columns_new = tox_columns[:-1]
+    for col in tox_columns_new:
         df[col] = df[col].map(tox_to_number[col])
     df['Predicted_56'] = scaler.fit_transform(df['Predicted_56'].values.reshape(-1, 1))
     df['FPADMET_Score'] = df[tox_columns].sum(axis=1)
     df = df.sort_values('FPADMET_Score', ascending=True)
-    df = df.head(5000)
+    df = df.head(3500)
     df.to_csv('fpadmet_results_sorted.csv')
     return df
 
 
-def get_new_dict_final(dict_final):
+def get_new_dict_final(dict_final, smi_input_file, fpadmet_df):
     smiles_dict = {}
-    with open('/home/kdunorat/Projetos/PharMisa/files/fpadmet_smiles.smi', 'r') as f:
+    with open(smi_input_file, 'r') as f:
         for line in f:
             smiles, code = line.strip().split('\t')
             smiles_dict[code] = smiles
 
-    df = pd.read_csv('/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet_results_sorted.csv')
     smiles_list = []
-
-    for code in df['Molecule']:
+    print(fpadmet_df.columns)
+    for code in fpadmet_df['Molecule']:
         smiles = smiles_dict.get(code)
         if smiles is not None:
             smiles_list.append(smiles)
@@ -66,37 +65,44 @@ def get_new_dict_final(dict_final):
     return dict_final
 
 
-def run_fpadmet():
+def run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters):
     results = []
-    fpadmet_path = '/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet'
-    script_path = f'{fpadmet_path}/runadmet.sh'
-    smi_input_file = create_fpadmet_input_file(dict_final_teste, output_folder_path)
-    #input_file = '/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet/mols.smi'
-    tox_parameters = [4, 6, 7, 8, 11, 17, 25, 29, 40, 56]
     for parameter in tox_parameters:
         print(f'Running fpadmet for parameter {parameter}')
         command = ["bash", script_path, "-f", smi_input_file, "-p", str(parameter)]
         subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         predicted_fpadmet = f'{fpadmet_path}/RESULTS/predicted{parameter}.txt'
         df_temp = pd.read_csv(predicted_fpadmet, sep=' ', header=None, names=['Molecule', f'Predicted_{parameter}'])
-        df_temp.set_index('Molecule', inplace=True)
+        df_temp.set_index('Molecule', inplace=True)  # Set 'Molecule' as index
         results.append(df_temp)
     df = pd.concat(results, axis=1)
+    df.reset_index(inplace=True)
     df = df.iloc[1:]
     df.to_csv('fpadmet_results.csv')
     return df
+
+
+def run_fpadmet(dict_final_teste, output_folder_path):
+    results = []
+    fpadmet_path = '/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet'
+    script_path = f'{fpadmet_path}/runadmet.sh'
+    #smi_input_file = create_fpadmet_input_file(dict_final_teste, output_folder_path)
+    smi_input_file = '/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet/mols.smi'
+    tox_parameters = [4, 6, 7, 8, 11, 17, 25, 29, 40, 56]
+    fpadmet_df = run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters)
+    fpadmet_df = get_fpadmet_score(fpadmet_df)
+    dict_final = get_new_dict_final(dict_final_teste, smi_input_file, fpadmet_df)
+
+    return dict_final
 
 
 if __name__ == '__main__':
     start = time.time()
     with open('dict_final.json', 'r') as f:
         dict_final_teste = eval(f.read())
-    output_folder_path = '/home/kdunorat/lambdapipe_results/7KR1-3-CID87'
-    #fpadmet_df = run_fpadmet()
-    fpadmet_df = pd.read_csv('fpadmet_results.csv')
-    fpadmet_df = get_fpadmet_score(fpadmet_df)
-    dict_final = get_new_dict_final(dict_final_teste)
-    with open('dict_final_fpadmet.json', 'w') as f:
+    output_folder_path1 = '/home/kdunorat/lambdapipe_results/7KR1-3-CID87'
+    dict_final = run_fpadmet(dict_final_teste, output_folder_path1)
+    with open('dict_final_fpadmet.json-teste', 'w') as f:
         f.write(json.dumps(dict_final))
     end = time.time()
     print(f'Time elapsed: {end - start} seconds')

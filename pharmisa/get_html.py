@@ -130,7 +130,7 @@ def clean_medicinal_columns(med_value, rules=True, sascore=False):
 
 def get_toxicity_score(input_df):
     toxicity = input_df.columns[62:86]
-    toxicity_region_dropped = input_df[toxicity].drop(columns=['IGC50', 'LC50DM', 'LC50FM', 'BCF'], axis=1)
+    toxicity_region_dropped = input_df[toxicity].drop(columns=['IGC50', 'LC50DM', 'LC50FM', 'BCF', 'EC'], axis=1)
     input_df['mean_toxicity'] = toxicity_region_dropped.mean(axis=1)
     input_df['std_toxicity'] = toxicity_region_dropped.std(axis=1)
     input_df['toxicity_score'] = (input_df['mean_toxicity'] + input_df['std_toxicity']) / 2
