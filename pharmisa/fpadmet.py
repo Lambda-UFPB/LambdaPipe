@@ -11,10 +11,10 @@ from sklearn.preprocessing import MinMaxScaler
 
 def create_fpadmet_input_file(dict_final, output_folder_path):
     smi_input_file_path = f'{output_folder_path}/fpadmet_smiles.smi'
-    with open(smi_input_file_path, 'w') as f:
+    with open(smi_input_file_path, 'w') as smi_f:
         for i, key in enumerate(dict_final, start=1):
-            smiles = dict_final_teste[key]['smiles']
-            f.write(f'{smiles}\tG{str(i).zfill(5)}\n')
+            smiles = dict_final[key]['smiles']
+            smi_f.write(f'{smiles}\tG{str(i).zfill(5)}\n')
     return smi_input_file_path
 
 
@@ -52,7 +52,6 @@ def get_new_dict_final(dict_final, smi_input_file, fpadmet_df):
             smiles_dict[code] = smiles
 
     smiles_list = []
-    print(fpadmet_df.columns)
     for code in fpadmet_df['Molecule']:
         smiles = smiles_dict.get(code)
         if smiles is not None:
@@ -67,8 +66,20 @@ def get_new_dict_final(dict_final, smi_input_file, fpadmet_df):
 
 def run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters):
     results = []
+    parameter_names = {
+        4: 'AMES Mutagenecity',
+        6: 'Rat Acute LD50',
+        7: 'Drug-Induced Liver Inhibition',
+        8: 'HERG Cardiotoxicity',
+        11: 'Urinary Toxicity',
+        17: 'Toxic Myopathy',
+        25: 'Respiratory Toxicity',
+        29: 'Carcinogenecity',
+        40: 'Cytotoxicity HepG2 cell line',
+        56: 'Skin penetration'
+    }
     for parameter in tox_parameters:
-        print(f'Running fpadmet for parameter {parameter}')
+        print(f'Running fpadmet for {parameter_names[parameter]}')
         command = ["bash", script_path, "-f", smi_input_file, "-p", str(parameter)]
         subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         predicted_fpadmet = f'{fpadmet_path}/RESULTS/predicted{parameter}.txt'
@@ -82,28 +93,25 @@ def run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters):
     return df
 
 
-def run_fpadmet(dict_final_teste, output_folder_path):
-    results = []
+def run_fpadmet(dict_final, output_folder_path):
     fpadmet_path = '/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet'
     script_path = f'{fpadmet_path}/runadmet.sh'
-    #smi_input_file = create_fpadmet_input_file(dict_final_teste, output_folder_path)
-    smi_input_file = '/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet/mols.smi'
+    smi_input_file = create_fpadmet_input_file(dict_final, output_folder_path)
     tox_parameters = [4, 6, 7, 8, 11, 17, 25, 29, 40, 56]
     fpadmet_df = run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters)
     fpadmet_df = get_fpadmet_score(fpadmet_df)
-    dict_final = get_new_dict_final(dict_final_teste, smi_input_file, fpadmet_df)
+    dict_final = get_new_dict_final(dict_final, smi_input_file, fpadmet_df)
 
     return dict_final
 
 
 if __name__ == '__main__':
     start = time.time()
-    with open('dict_final.json', 'r') as f:
-        dict_final_teste = eval(f.read())
+    with open('dict_final.json', 'r') as file:
+        dict_final_teste = eval(file.read())
     output_folder_path1 = '/home/kdunorat/lambdapipe_results/7KR1-3-CID87'
-    dict_final = run_fpadmet(dict_final_teste, output_folder_path1)
-    with open('dict_final_fpadmet.json-teste', 'w') as f:
-        f.write(json.dumps(dict_final))
+    dict_final1 = run_fpadmet(dict_final_teste, output_folder_path1)
+    with open('dict_final_fpadmet.json-teste', 'w') as file:
+        file.write(json.dumps(dict_final1))
     end = time.time()
     print(f'Time elapsed: {end - start} seconds')
-
