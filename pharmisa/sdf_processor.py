@@ -4,9 +4,8 @@ from rdkit import RDLogger, Chem
 
 class SdfProcessor:
     """Selects the best molecules from sdf files"""
-    def __init__(self, minimize_count: int, top, output_folder_path: str, score: float, cli_rmsd: float):
+    def __init__(self, minimize_count: int, output_folder_path: str, score: float, cli_rmsd: float):
         self.output_folder_path = output_folder_path
-        self.top = top
         self.score = score
         self.cli_rmsd = cli_rmsd
         self.minimize_count = minimize_count
@@ -51,10 +50,12 @@ class SdfProcessor:
                         self.best_molecules.append((mol_ids, score, rmsd, smiles))
                         self.analyzed_mol = self.analyzed_mol.union(mol_ids_set)
                         self.smiles_found.append(smiles)
+                else:
+                    continue
 
     def _mol_check(self, mol_ids_set: set, score: float, rmsd: float) -> bool:
         """Check if the molecule is already in the analyzed_mol
-        set and if it fits the threshold (score < -11 and rmsd < 7)"""
+        set and if it fits the threshold (score < input_score and rmsd < input_rmsd)"""
         if not mol_ids_set.intersection(self.analyzed_mol):
             if score < self.score and rmsd <= self.cli_rmsd:
                 return True
@@ -63,20 +64,12 @@ class SdfProcessor:
         """Returns a dict with the top best molecules"""
         return {mol[0]: {'score': mol[1], 'rmsd': mol[2], 'smiles': mol[3]} for mol in self.best_molecules}
 
-    def _get_top_molecules(self, top: int):
-        """Get the top n molecules"""
-        self.best_molecules.sort(key=lambda x: x[1], reverse=False)
-        self.best_molecules = self.best_molecules[:top]
-
     def run_sdfprocessor(self):
         self._process_sdf()
         if self.best_molecules:
             write_stats(f"\n\nNumber of molecules after filtering (Score < {self.score} and RMSD < {self.cli_rmsd}): "
                         f"{len(self.best_molecules)}", self.output_folder_path)
-            if len(self.best_molecules) > self.top:
-                self._get_top_molecules(self.top)
-
-            write_stats(f"\nBest score before admet research: {self.best_molecules[0]}", self.output_folder_path)
+            write_stats(f"\nBest score found: {self.best_molecules[0]}", self.output_folder_path)
         else:
             raise ValueError('No molecules that fit the threshold found in the .sdf files')
         

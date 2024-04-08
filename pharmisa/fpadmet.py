@@ -19,24 +19,22 @@ def create_fpadmet_input_file(dict_final, output_folder_path):
 
 
 def get_fpadmet_score(df):
-    scaler = MinMaxScaler()
     tox_to_number = {
         'Predicted_4': {'active': 1, 'inactive': 0},
         'Predicted_6': {'EPA1': 1, 'EPA2': 0.75, 'EPA3': 0.5, 'EPA4': 0},
         'Predicted_7': {'P': 1, 'N': 0},
         'Predicted_8': {'P': 1, 'N': 0},
-        'Predicted_11': {'Positive': 1, 'Negative': 0},
+        'Predicted_10': {'Positive': 1, 'Negative': 0},
         'Predicted_17': {'Positive': 1, 'Negative': 0},
         'Predicted_25': {'Yes': 1, 'No': 0},
         'Predicted_29': {'Carcinogen': 1, 'NonCarcinogen': 0},
+        'Predicted_35': {'Yes': 1, 'No': 0},
         'Predicted_40': {'P': 1, 'N': 0}
     }
     all_columns = df.columns
     tox_columns = [col for col in all_columns if 'Predicted' in col]
-    tox_columns_new = tox_columns[:-1]
-    for col in tox_columns_new:
+    for col in tox_columns:
         df[col] = df[col].map(tox_to_number[col])
-    df['Predicted_56'] = scaler.fit_transform(df['Predicted_56'].values.reshape(-1, 1))
     df['FPADMET_Score'] = df[tox_columns].sum(axis=1)
     df = df.sort_values('FPADMET_Score', ascending=True)
     df = df.head(3500)
@@ -71,12 +69,12 @@ def run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters):
         6: 'Rat Acute LD50',
         7: 'Drug-Induced Liver Inhibition',
         8: 'HERG Cardiotoxicity',
-        11: 'Urinary Toxicity',
-        17: 'Toxic Myopathy',
+        10: 'Myelotoxicity',
+        17: 'Myopathy Toxicity',
         25: 'Respiratory Toxicity',
         29: 'Carcinogenecity',
+        35: 'Ototoxicity',
         40: 'Cytotoxicity HepG2 cell line',
-        56: 'Skin penetration'
     }
     for parameter in tox_parameters:
         print(f'Running fpadmet for {parameter_names[parameter]}')
@@ -96,8 +94,9 @@ def run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters):
 def run_fpadmet(dict_final, output_folder_path):
     fpadmet_path = '/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet'
     script_path = f'{fpadmet_path}/runadmet.sh'
-    smi_input_file = create_fpadmet_input_file(dict_final, output_folder_path)
-    tox_parameters = [4, 6, 7, 8, 11, 17, 25, 29, 40, 56]
+    #smi_input_file = create_fpadmet_input_file(dict_final, output_folder_path)
+    smi_input_file = '/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet-backup/mols.smi'
+    tox_parameters = [4, 6, 7, 8, 10, 17, 25, 29, 35, 40]
     fpadmet_df = run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters)
     fpadmet_df = get_fpadmet_score(fpadmet_df)
     dict_final = get_new_dict_final(dict_final, smi_input_file, fpadmet_df)
