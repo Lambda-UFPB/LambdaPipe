@@ -1,12 +1,6 @@
 import subprocess
 import pandas as pd
-import time
-import json
-from sklearn.preprocessing import MinMaxScaler
-
-# fpadmet_path = importlib.resources.files('pharmisa.fpadmet')
-# script_path = fpadmet_path.joinpath('runadmet.sh')
-# predicted_fpadmet = str(fpadmet_path.joinpath('/RESULTS/predicted.txt'))
+import importlib.resources
 
 
 def create_fpadmet_input_file(dict_final, output_folder_path):
@@ -80,7 +74,7 @@ def run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters):
         print(f'Running fpadmet for {parameter_names[parameter]}')
         command = ["bash", script_path, "-f", smi_input_file, "-p", str(parameter)]
         subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        predicted_fpadmet = f'{fpadmet_path}/RESULTS/predicted{parameter}.txt'
+        predicted_fpadmet = str(fpadmet_path.joinpath(f'/RESULTS/predicted{parameter}.txt'))
         df_temp = pd.read_csv(predicted_fpadmet, sep=' ', header=None, names=['Molecule', f'Predicted_{parameter}'])
         df_temp.set_index('Molecule', inplace=True)  # Set 'Molecule' as index
         results.append(df_temp)
@@ -92,8 +86,8 @@ def run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters):
 
 
 def run_fpadmet(dict_final, output_folder_path):
-    fpadmet_path = '/home/kdunorat/Projetos/PharMisa/pharmisa/fpadmet'
-    script_path = f'{fpadmet_path}/runadmet.sh'
+    fpadmet_path = importlib.resources.files('pharmisa.fpadmet')
+    script_path = fpadmet_path.joinpath('runadmet.sh')
     smi_input_file = create_fpadmet_input_file(dict_final, output_folder_path)
     tox_parameters = [4, 6, 7, 8, 10, 17, 25, 29, 35, 40]
     fpadmet_df = run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters)
@@ -101,15 +95,3 @@ def run_fpadmet(dict_final, output_folder_path):
     dict_final = get_new_dict_final(dict_final, smi_input_file, fpadmet_df)
 
     return dict_final
-
-
-if __name__ == '__main__':
-    start = time.time()
-    with open('dict_final.json', 'r') as file:
-        dict_final_teste = eval(file.read())
-    output_folder_path1 = '/home/kdunorat/lambdapipe_results/7KR1-3-CID87'
-    dict_final1 = run_fpadmet(dict_final_teste, output_folder_path1)
-    with open('dict_final_fpadmet.json-teste', 'w') as file:
-        file.write(json.dumps(dict_final1))
-    end = time.time()
-    print(f'Time elapsed: {end - start} seconds')

@@ -5,8 +5,8 @@ from selenium.common.exceptions import (WebDriverException, NoSuchElementExcepti
                                         StaleElementReferenceException, ElementNotInteractableException)
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-from utils import *
-from exceptions import InvalidInputError
+from .utils import *
+from .exceptions import InvalidInputError
 
 
 class PharmitControl:
@@ -115,7 +115,7 @@ class PharmitControl:
             except NoSuchElementException:
                 pass
 
-    def _search(self, db=None):
+    def _search(self):
         # Click on the search button
         search = self.driver.find_element(By.XPATH, '//*[@id="pharmitsearchbutton"]')
         while True:
@@ -315,7 +315,7 @@ class PharmitControl:
         if run_pharmisa == 0 and self.is_plip:
             self._hit_reduction(db)
         time.sleep(1)
-        self._search(db)
+        self._search()
 
     def _loops(self, db_half):
         self._search_loop(db_half)

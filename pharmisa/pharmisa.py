@@ -11,19 +11,18 @@ Email: kdu.norat@gmail.com
 import click
 import time
 import asyncio
-import json
 import os
-from pharmit_control import PharmitControl
-from top_feature_configs import run_feature_configs
-from pharma_optimizer import PharmaOptimizer
-from json_handler import JsonHandler
-from sdf_processor import SdfProcessor
-from fpadmet import run_fpadmet
-from admet_request import run_admet_request
-from admet_analyzer import AdmetAnalyzer
-from get_html import results_to_html
-from utils import (generate_folder_name, create_folders, create_stats_file, get_download_list, get_absolute_path, get_minimized_results_files_list, write_stats)
-from exceptions import AdmetServerError, NoMoleculeError
+from pharmisa.pharmit_control import PharmitControl
+from pharmisa.top_feature_configs import run_feature_configs
+from pharmisa.pharma_optimizer import PharmaOptimizer
+from pharmisa.json_handler import JsonHandler
+from pharmisa.sdf_processor import SdfProcessor
+from pharmisa.fpadmet import run_fpadmet
+from pharmisa.admet_request import run_admet_request
+from pharmisa.admet_analyzer import AdmetAnalyzer
+from pharmisa.get_html import results_to_html
+from pharmisa.utils import (generate_folder_name, create_folders, create_stats_file, get_download_list, get_absolute_path, get_minimized_results_files_list, write_stats)
+from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 
 
 @click.command()
@@ -38,7 +37,7 @@ from exceptions import AdmetServerError, NoMoleculeError
 @click.option("--process", type=str,
               help="Process the results on a specific folder without performing the search")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
-@click.version_option("1.0.0")
+@click.version_option("1.2.0")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, output):
 
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):

@@ -66,9 +66,3 @@ async def run_admet_request(best_molecules_dict: dict):
     final_mol_list = [mol for sublist in responses for mol in sublist]
 
     return final_mol_list
-
-if __name__ == '__main__':
-    with open('dict_final.json', 'r') as f:
-        dict_final = eval(f.read())
-    final = asyncio.run(run_admet_request(dict_final))
-    print(final)

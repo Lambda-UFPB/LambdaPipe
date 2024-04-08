@@ -1,7 +1,4 @@
-from utils import *
-from exceptions import NoMoleculeError
-import ast
-import json
+from .utils import *
 
 
 class AdmetAnalyzer:
@@ -63,13 +60,3 @@ class AdmetAnalyzer:
                     f"Best score after admet research: {best_score}", self.output_folder_path)
 
         self.admet_df.to_csv(f'{self.results_path}/admet_filtered.csv', index=False)
-
-
-if __name__ == '__main__':
-    output_folder = '/home/kdunorat/lambdapipe_results/7KR1-3-CID87'
-    with open('molecules_dict_list.txt', 'r') as f:
-        list_from_file = ast.literal_eval(f.read())
-    with open('dict_final.json', 'r') as f:
-        dict_final = json.load(f)
-    analyzer = AdmetAnalyzer(output_folder, dict_final, list_from_file)
-    analyzer.run_admet_analyzer()

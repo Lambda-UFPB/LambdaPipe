@@ -1,6 +1,5 @@
 import pandas as pd
 from ast import literal_eval
-from sklearn.preprocessing import MinMaxScaler
 
 
 def define_globals(df):
@@ -26,9 +25,7 @@ def define_globals(df):
     medicinal_rules_columns.extend(['gasa', 'SA-score'])
 
 
-
 # Defining the globals
-minmax_scaler = MinMaxScaler()
 df_old = pd.DataFrame()
 no_color_columns, normal_values_columns, medicinal_rules_columns, columns_to_clean, strange_columns = [], [], [], [], []
 
@@ -55,7 +52,8 @@ def color_format(column):
         if column_name == 'caco2':
             color = column.apply(lambda val: '#58D68D' if float(val) > -5.15 else '#EC7063')
         if column_name == 'cl-plasma':
-            color = column.apply(lambda val: '#58D68D' if 0 < float(val) <= 5 else ('#F4D03F' if 5 < float(val) <= 15 else '#EC7063'))
+            color = column.apply(lambda val: '#58D68D' if 0 < float(val) <= 5 else ('#F4D03F' if 5 < float(val) <= 15
+                                                                                    else '#EC7063'))
     else:
         return ['background-color: default' for _ in column]
 
@@ -277,7 +275,3 @@ def results_to_html(output_folder_path: str, folder_name: str):
         html = subtitle + html
     with open(f"{output_folder_path}/results/{folder_name}_results.html", "w") as f:
         f.write(html)
-
-
-if __name__ == '__main__':
-    results_to_html("/home/kdunorat/lambdapipe_results/7KR1-3-CID13", "novosparam")
