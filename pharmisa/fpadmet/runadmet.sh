@@ -10,7 +10,6 @@ FPGEN="java -jar FINGERPRINTER/FingerprintGenerator.jar"
 RSCRIPT="/usr/bin/Rscript"
 PREDICTIONSCRIPTS="PREDICTORS"
 FPOUT="RESULTS/fps.txt"
-PREDOUT="RESULTS/predicted.txt"
 #==============================================================================
 
 
@@ -120,8 +119,8 @@ while getopts "f:p:s:ah" opt; do
         ;;
     esac
 done
+PREDOUT="RESULTS/predicted${ptype}.txt"
 shift $((OPTIND-1))
-
 
 ## initialize
 retcode=0

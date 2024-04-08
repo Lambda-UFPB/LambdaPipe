@@ -133,20 +133,20 @@ def exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_num
 def exec_pharmisa_process(minimize_count, top, score, output_folder_path, rmsd, folder_name, start_time,
                           only_process=False):
     click.echo("\nProcessing Results...")
+    """
     sdfp = SdfProcessor(minimize_count, top, output_folder_path, score=score, cli_rmsd=rmsd)
     if not only_process:
         sdfp.get_sdfs()
     else:
         sdfp.sdf_files = get_minimized_results_files_list(output_folder_path)
     dict_final = sdfp.run_sdfprocessor()
-    with open(f'dict_final.json', 'w') as f:
-        f.write(json.dumps(dict_final))
     """
+    with open('dict_final_fpadmet.json', 'r') as f:
+        dict_final = json.loads(f.read())
+
     click.echo("\nGetting ADMET info...")
     try:
         molecules_dict_list = asyncio.run(asyncio.wait_for(run_admet_request(dict_final), timeout=120000))
-        with open('molecules_dict_list.txt', 'w') as f:
-            f.write(json.dumps(molecules_dict_list))
             
     except AdmetServerError:
         click.echo("\nError: ADMET server is down. Please try again later using pharmisa --process.")
@@ -161,8 +161,6 @@ def exec_pharmisa_process(minimize_count, top, score, output_folder_path, rmsd, 
     results_to_html(output_folder_path, folder_name)
 
     click.echo(f"\nGo to {output_folder_path} to see the final results")
-    
-    """
     elapsed_time = time.time()
     click.echo(f"\n\nAnalysis Completed\n{(elapsed_time - start_time)/60:.2f} minutes")
 
