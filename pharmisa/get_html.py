@@ -3,7 +3,8 @@ from ast import literal_eval
 
 
 def define_globals(df):
-    global no_color_columns, normal_values_columns, medicinal_rules_columns, columns_to_clean, strange_columns
+    global no_color_columns, normal_values_columns, medicinal_rules_columns, columns_to_clean, strange_columns, \
+        thresholds
     all_columns = df.columns.tolist()
     no_color_columns = ['Molecule ID', 'SMILES', 'Score Pharmit', 'RMSD Pharmit', 'Alarm_NMR', 'BMS', 'Chelating',
                         'PAINS', 'Natural Product-likeness', 't0.5', 'CYP1A2-inh', 'CYP1A2-sub', 'CYP2C19-inh',
@@ -14,20 +15,33 @@ def define_globals(df):
     columns_to_clean = ['Alarm_NMR', 'BMS', 'PAINS', 'Chelating', 'NonBiodegradable', 'NonGenotoxic_Carcinogenicity',
                         'SureChEMBL', 'Skin_Sensitization', 'Acute_Aquatic_Toxicity', 'Toxicophores',
                         'Genotoxic_Carcinogenicity_Mutagenicity']
-    strange_columns = ['QED', 'Fsp3', 'MCE-18', 'caco2', 'cl-plasma']
+    strange_columns = ['QED', 'Fsp3', 'MCE-18', 'SA-score', 'caco2', 'cl-plasma']
     normal_values_columns = all_columns[15:21]
     normal_values_columns.extend(all_columns[22:30])
     normal_values_columns.extend(all_columns[66:86])
     normal_values_columns.extend(all_columns[86:98])
     normal_values_columns.extend(['Pharmisa Score', 'toxicity_score', 'medicinal_score', 'absortion_score',
                                   'distribution_score', 'metabolism_score', 'excretion_score', 'tox21_score'])
+    normal_values_columns.remove('MDCK')
+
     medicinal_rules_columns = all_columns[11:15]
-    medicinal_rules_columns.extend(['gasa', 'SA-score'])
+    medicinal_rules_columns.extend(['gasa'])
+
+    thresholds = {
+        'QED': (0.67, 0.67),
+        'Fsp3': (0.42, 0.42),
+        'MCE-18': (45, 45),
+        'SA-score': (6, 6),
+        'caco2': (-5.15, -5.15),
+        'cl-plasma': (5, 15),
+        't0.5': (1, 8),
+    }
 
 
 # Defining the globals
 df_old = pd.DataFrame()
 no_color_columns, normal_values_columns, medicinal_rules_columns, columns_to_clean, strange_columns = [], [], [], [], []
+thresholds = {}
 
 
 def color_format(column):
@@ -49,6 +63,8 @@ def color_format(column):
             color = column.apply(lambda val: '#58D68D' if float(val) >= 0.42 else '#EC7063')
         if column_name == 'MCE-18':
             color = column.apply(lambda val: '#58D68D' if float(val) >= 45 else '#EC7063')
+        if column_name == 'SA-score':
+            color = column.apply(lambda val: '#58D68D' if float(val) <= 6 else '#EC7063')
         if column_name == 'caco2':
             color = column.apply(lambda val: '#58D68D' if float(val) > -5.15 else '#EC7063')
         if column_name == 'cl-plasma':
@@ -65,11 +81,10 @@ def get_df_html(df_html_old: pd.DataFrame):
     """Get the DataFrame with the desired columns and format."""
     global columns_to_clean
     global medicinal_rules_columns
+
     for column in medicinal_rules_columns:
         if column == 'gasa':
-            df_html_old[column] = df_html_old[column].apply(clean_medicinal_columns, rules=False, sascore=False)
-        elif column == 'SA-score':
-            df_html_old[column] = df_html_old[column].apply(clean_medicinal_columns, rules=False, sascore=True)
+            df_html_old[column] = df_html_old[column].apply(clean_medicinal_columns, rules=False)
         else:
             df_html_old[column] = df_html_old[column].apply(clean_medicinal_columns)
     for column in columns_to_clean:
@@ -107,23 +122,30 @@ def clean_lists_columns(alert_value):
         return 0
 
 
-def clean_medicinal_columns(med_value, rules=True, sascore=False):
+def clean_medicinal_columns(med_value, rules=True):
     if rules:
         if med_value == 0:
             return 'Accepted'
         else:
             return 'Rejected'
     else:
-        if sascore:
-            if med_value < 6:
-                return 'Easy'
-            else:
-                return 'Hard'
+        if med_value == 0:
+            return 'Easy'
         else:
-            if med_value == 0:
-                return 'Easy'
-            else:
-                return 'Hard'
+            return 'Hard'
+
+
+def normalize(value, lower_threshold, upper_threshold, is_reverse=False):
+    if value <= lower_threshold:
+        if is_reverse:
+            return 0.7 + 0.3 * (value / lower_threshold)
+        return 0.3 * (value / lower_threshold)
+    elif value >= upper_threshold:
+        if is_reverse:
+            return 0.3 * (value / lower_threshold)
+        return 0.7 + 0.3 * ((value - upper_threshold) / (1 - upper_threshold))
+    else:
+        return 0.3 + 0.4 * ((value - lower_threshold) / (upper_threshold - lower_threshold))
 
 
 def get_toxicity_score(input_df):
@@ -131,17 +153,26 @@ def get_toxicity_score(input_df):
     toxicity_region_dropped = input_df[toxicity].drop(columns=['IGC50', 'LC50DM', 'LC50FM', 'BCF', 'EC'], axis=1)
     input_df['mean_toxicity'] = toxicity_region_dropped.mean(axis=1)
     input_df['std_toxicity'] = toxicity_region_dropped.std(axis=1)
-    input_df['toxicity_score'] = (input_df['mean_toxicity'] + input_df['std_toxicity']) / 2
+    # Count the number of high toxicity values
+    high_toxicity_count = (toxicity_region_dropped > 0.7).sum(axis=1)
+
+    penalty = 0.1 * high_toxicity_count
+    input_df['toxicity_score'] = (input_df['mean_toxicity'] + input_df['std_toxicity']) / 2 + penalty
     input_df = input_df.drop(columns=['mean_toxicity', 'std_toxicity'], axis=1)
     return input_df
 
 
 def get_medicinal_score(input_df):
-    input_df['qed_score'] = input_df['QED'].apply(lambda x: 0.15 if x > 0.67 else 0.85)
+    global thresholds
+    input_df['qed_score'] = input_df['QED'].apply(lambda x: normalize(x, thresholds['QED'][0], thresholds['QED'][1],
+                                                                      is_reverse=True))
     input_df['gasa_score'] = input_df['gasa'].apply(lambda x: 0.15 if x == 'Easy' else 0.85)
-    input_df['sascore_score'] = input_df['SA-score'].apply(lambda x: 0.15 if x == 'Easy' else 0.85)
-    input_df['fsp3_score'] = input_df['Fsp3'].apply(lambda x: 0.15 if x >= 0.42 else 0.85)
-    input_df['mce18_score'] = input_df['MCE-18'].apply(lambda x: 0.15 if x >= 45 else 0.85)
+    input_df['sascore_score'] = input_df['QED'].apply(lambda x: normalize(x, thresholds['QED'][0],
+                                                                          thresholds['QED'][1]))
+    input_df['fsp3_score'] = input_df['Fsp3'].apply(lambda x: normalize(x, thresholds['Fsp3'][0],
+                                                                        thresholds['Fsp3'][1], is_reverse=True))
+    input_df['mce18_score'] = input_df['MCE-18'].apply(lambda x: normalize(x, thresholds['MCE-18'][0],
+                                                                           thresholds['MCE-18'][1], is_reverse=True))
     input_df['alarmnmr_score'] = input_df['Alarm_NMR'].apply(lambda x: 0.15 if x == "['-']" else 0.85)
     input_df['bms_score'] = input_df['BMS'].apply(lambda x: 0.15 if x == "['-']" else 0.85)
     input_df['pains_score'] = input_df['PAINS'].apply(lambda x: 0.15 if x == "['-']" else 0.85)
@@ -157,11 +188,20 @@ def get_medicinal_score(input_df):
     for column in columns_to_change:
         input_df[column] = input_df[column].astype(float)
     weights = {
-        'pfizer_score': 10,
-        'sascore_score': 10,
-        'lipinski_score': 5,
-        'gsk_score': 2,
-        'goldentriangle_score': 1
+        'pfizer_score': 20,
+        'sascore_score': 20,
+        'lipinski_score': 10,
+        'gsk_score': 5,
+        'goldentriangle_score': 3,
+        'qed_score': 1,
+        'gasa_score': 1,
+        'fsp3_score': 1,
+        'mce18_score': 1,
+        'alarmnmr_score': 1,
+        'bms_score': 1,
+        'pains_score': 1,
+        'chelating_score': 1
+
     }
 
     for score, weight in weights.items():
@@ -176,8 +216,10 @@ def get_medicinal_score(input_df):
 
 
 def get_absortion_score(input_df):
+    global thresholds
     absortion = input_df.columns[21:30]
-    input_df['caco2_score'] = input_df['caco2'].apply(lambda x: 0.15 if x > -5.15 else 0.85)
+    input_df['caco2_score'] = input_df['caco2'].apply(lambda x: normalize(x, thresholds['caco2'][0],
+                                                                          thresholds['caco2'][1], is_reverse=True))
     absortion_score = pd.concat([input_df[absortion], input_df['caco2_score']], axis=1)
     absortion_score = absortion_score.drop(columns=['caco2', 'MDCK'], axis=1)
     input_df['absortion_score'] = absortion_score.mean(axis=1)
@@ -209,9 +251,11 @@ def get_metabolism_score(input_df):
 
 
 def get_excretion_score(input_df):
-    input_df['clplasma_score'] = input_df['cl-plasma'].apply(
-        lambda x: 0.15 if 0 < x <= 5 else (0.5 if 5 < x <= 15 else 0.85))
-    input_df['t0.5_score'] = input_df['t0.5'].apply(lambda x: 0.15 if x > 8 else (0.5 if 1 < x <= 8 else 0.85))
+    global thresholds
+    input_df['clplasma_score'] = input_df['cl-plasma'].apply(lambda x: normalize(x, thresholds['cl-plasma'][0],
+                                                                                 thresholds['cl-plasma'][1]))
+    input_df['t0.5_score'] = input_df['t0.5'].apply(lambda x: normalize(x, thresholds['t0.5'][0], thresholds['t0.5'][1],
+                                                                        is_reverse=True))
     excretion_score = input_df[['clplasma_score', 't0.5_score']]
     input_df['excretion_score'] = excretion_score.mean(axis=1)
     input_df = input_df.drop(columns=['clplasma_score', 't0.5_score'], axis=1)
