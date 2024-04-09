@@ -319,3 +319,4 @@ def results_to_html(output_folder_path: str, folder_name: str):
         html = subtitle + html
     with open(f"{output_folder_path}/results/{folder_name}_results.html", "w") as f:
         f.write(html)
+        f.write(html)
