@@ -4,7 +4,7 @@
 ## Installation
 
 ### Installing R Packages:
-Go to the [pharmisa_download](link) and download the content of the "R package installation" folder. Follow the Guia.txt for the installation of R and the packages that pharmisa will use.
+Go to the [pharmisa_download](https://drive.google.com/drive/folders/1nLe4NSui-AeI6XceHdFu2nbj4Mz-6CBE) and download the content of the "R package installation" folder. Follow the Guia.txt for the installation of R and the packages that pharmisa will use.
 
 ### Installing Pharmisa:
 ```bash
@@ -25,10 +25,14 @@ pip install --upgrade pharmisa
 ```bash
 pharmisa [PATH TO THE RECEPTOR] [PATH TO THE LIGAND] [OPTIONS] 
 ```
+To perform only a processing of pharmit results:
+```bash
+pharmisa --process [PATH TO THE FOLDER] [OPTIONS]
+``` 
 
 ### OPTIONS
-- `-r, --rmsd`: RMSD limit for filtering results. Default = 7.0
-- `--score`: Score limit for filtering results
+- `-r, --rmsd`: RMSD limit for filtering results. Default = 20.0
+- `--score`: Score limit for filtering results. Default = -9.0
 - `-p, --pharma`: This option activates a menu to select pharmacophores interactively
 - `-s, --session`: If you want to run a session already done in pharmit.
 - `--plip_csv`:  PLIP csv file for pharmacophoric search optimized by the database.
