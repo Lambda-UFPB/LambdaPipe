@@ -67,13 +67,15 @@ def create_folders(folder_name: str):
     return output_folder_path
 
 
-def merge_csv(csv_files_path: str):
-    csv_files = glob.glob(f"{csv_files_path}/admetcsv_*.csv")
-    csv_files.sort(key=lambda x: int(re.findall(r'admetcsv_(\d+)\.csv', x)[0]))
-    merged_csv = pd.concat([pd.read_csv(file) for file in csv_files])
-    merged_csv.to_csv(f"{csv_files_path}/merged.csv", index=False)
-    for f in csv_files:
-        os.remove(f)
+def process_smiles_file(smiles_file_path: str):
+    analyzed_mol_dict = {}
+    with open(smiles_file_path, 'r') as f:
+        smiles_list = f.readlines()
+    smiles_list = [smiles.strip() for smiles in smiles_list]
+    for smile in smiles_list:
+        analyzed_mol_dict[f'Molecule_{smiles_list.index(smile) + 1}'] = {"score": "NA", "rmsd": "NA", "smiles": smile}
+
+    return analyzed_mol_dict
 
 
 def get_chrome_binary_path():

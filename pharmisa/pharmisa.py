@@ -21,7 +21,7 @@ from pharmisa.fpadmet import run_fpadmet
 from pharmisa.admet_request import run_admet_request
 from pharmisa.admet_analyzer import AdmetAnalyzer
 from pharmisa.get_html import results_to_html
-from pharmisa.utils import (generate_folder_name, create_folders, create_stats_file, get_download_list, get_absolute_path, get_minimized_results_files_list, write_stats)
+from pharmisa.utils import (generate_folder_name, create_folders, create_stats_file, get_download_list, get_absolute_path, get_minimized_results_files_list, write_stats, process_smiles_file)
 from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 
 
@@ -36,28 +36,26 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 @click.option("--slow", is_flag=True, help="Perform half of the databases search at a time")
 @click.option("--process", type=str,
               help="Process the results on a specific folder without performing the search")
-@click.option("--only_admet", type=click.Path(exists=True),
-              help= "Only run the admet analysis on a file with a list of SMILES")
+@click.option("--only_admet", type=str,
+              help="Only run the admet analysis on a file with a list of SMILES")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
-@click.version_option("1.2.3")
+@click.version_option("1.2.4")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output):
-
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
         raise click.BadParameter(
             "You can run --process only with the flags --score and --rmsd.")
 
-    if not process and (not session and (not receptor_file or not ligand_file)) or (session and (receptor_file or
-                                                                                                 ligand_file)):
+    if not process and (not only_admet and not session and (not receptor_file or not ligand_file)) or (session and
+                                                                                                       (receptor_file or
+                                                                                                        ligand_file)):
         raise click.BadParameter(
             "You must provide either a session or both a receptor file and a ligand file.")
+    if only_admet and (receptor_file or ligand_file or pharma or session or plip_csv or slow or process):
+        raise click.BadParameter(
+            "You can only provide the flag --output with --only_admet")
     if (plip_csv and session) or (plip_csv and pharma):
         raise click.BadParameter(
             "You can't provide a plip csv file with a session or with the pharma flag.")
-    if only_admet and (receptor_file or ligand_file or pharma or session or plip_csv or slow or process or output or
-                       score or rmsd):
-
-        raise click.BadParameter(
-            "You can't provide any other flag with --only_admet.")
     start_time = time.time()
     if not process:
         if slow:
@@ -70,14 +68,17 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
         except FileExistsError:
             click.echo(f"The folder {folder_name} already exists. Please provide a different name.")
             return
-        pharmacophore_number = False
-        phc, new_session, pharmacophore_number = search_prepare(receptor_file, ligand_file, pharma, session, plip_csv,
-                                                                output_folder_path, old_download_list,
-                                                                pharmacophore_number)
-        minimize_count = exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_number,
-                                              is_plip=plip_csv, fast=fast)
-        exec_pharmisa_process(minimize_count,score, output_folder_path, rmsd, folder_name, start_time)
-
+        if not only_admet:
+            pharmacophore_number = False
+            phc, new_session, pharmacophore_number = search_prepare(receptor_file, ligand_file, pharma, session,
+                                                                    plip_csv,
+                                                                    output_folder_path, old_download_list,
+                                                                    pharmacophore_number)
+            minimize_count = exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_number,
+                                                  is_plip=plip_csv, fast=fast)
+            exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folder_name, start_time)
+        else:
+            exec_pharmisa_process(0, score, output_folder_path, rmsd, folder_name, start_time, only_admet=only_admet)
     else:
         folder_name = process.split("/")[-1]
         output_folder_path = get_absolute_path(process)
@@ -86,7 +87,6 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
 
 def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output_folder_path, old_download_list,
                    pharmacophore_number):
-
     if session:
         phc = PharmitControl('', '', output_folder_path)
         new_session = [session]
@@ -104,7 +104,7 @@ def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output
             new_session = []
             for index, config in enumerate(configs_list):
                 jsh.write_points(config)
-                new = jsh.create_json(file_index=index+1)
+                new = jsh.create_json(file_index=index + 1)
                 new_session.append(new)
                 pharmacophore_number = True
         else:
@@ -113,7 +113,6 @@ def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output
 
 
 def exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_number, is_plip, fast=False):
-
     minimize_count = 0
     pharmacophore_number = 3 if pharmacophore_number else pharmacophore_number
     quit_now = False
@@ -137,30 +136,33 @@ def exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_num
 
 
 def exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folder_name, start_time,
-                          only_process=False):
-    click.echo("\nProcessing Results...")
-    sdfp = SdfProcessor(minimize_count, output_folder_path, score=score, cli_rmsd=rmsd)
-    if not only_process:
-        sdfp.get_sdfs()
-    else:
-        if not os.path.isdir(output_folder_path):
-            click.echo(f"\nFolder {output_folder_path} does not exist. Please provide a valid path.")
+                          only_process=False, only_admet=None):
+    if not only_admet:
+        click.echo("\nProcessing Results...")
+        sdfp = SdfProcessor(minimize_count, output_folder_path, score=score, cli_rmsd=rmsd)
+        if not only_process:
+            sdfp.get_sdfs()
+        else:
+            if not os.path.isdir(output_folder_path):
+                click.echo(f"\nFolder {output_folder_path} does not exist. Please provide a valid path.")
+                return
+            sdfp.sdf_files = get_minimized_results_files_list(output_folder_path)
+        try:
+            analyzed_mol_dict = sdfp.run_sdfprocessor()
+        except ValueError:
+            click.echo("\nNo molecules that fit the threshold found in the .sdf files")
             return
-        sdfp.sdf_files = get_minimized_results_files_list(output_folder_path)
-    try:
-        analyzed_mol_dict = sdfp.run_sdfprocessor()
-    except ValueError:
-        click.echo("\nNo molecules that fit the threshold found in the .sdf files")
-        return
 
-    if len(analyzed_mol_dict) > 5000:
-        click.echo(f"\nStarting fpadmet analysis in {len(analyzed_mol_dict)} molecules")
-        analyzed_mol_dict = run_fpadmet(analyzed_mol_dict, output_folder_path)
+        if len(analyzed_mol_dict) > 5000:
+            click.echo(f"\nStarting fpadmet analysis in {len(analyzed_mol_dict)} molecules")
+            analyzed_mol_dict = run_fpadmet(analyzed_mol_dict, output_folder_path)
 
+    else:
+        analyzed_mol_dict = process_smiles_file(only_admet)
     click.echo("\nGetting ADMET info...")
     try:
         molecules_dict_list = asyncio.run(asyncio.wait_for(run_admet_request(analyzed_mol_dict), timeout=120000))
-            
+
     except AdmetServerError:
         click.echo("\nError: ADMET server is down. Please try again later using pharmisa --process.")
         return
@@ -175,7 +177,7 @@ def exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folde
 
     click.echo(f"\nGo to {output_folder_path} to see the final results")
     elapsed_time = time.time()
-    click.echo(f"\n\nAnalysis Completed\n{(elapsed_time - start_time)/60:.2f} minutes")
+    click.echo(f"\n\nAnalysis Completed\n{(elapsed_time - start_time) / 60:.2f} minutes")
 
 
 def create_folder(folder_name):
