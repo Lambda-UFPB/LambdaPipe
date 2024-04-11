@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from ast import literal_eval
 
 
@@ -158,6 +159,7 @@ def get_toxicity_score(input_df):
 
     penalty = 0.1 * high_toxicity_count
     input_df['toxicity_score'] = (input_df['mean_toxicity'] + input_df['std_toxicity']) / 2 + penalty
+    input_df['toxicity_score'] = np.clip(input_df['toxicity_score'], 0, 1)
     input_df = input_df.drop(columns=['mean_toxicity', 'std_toxicity'], axis=1)
     return input_df
 
