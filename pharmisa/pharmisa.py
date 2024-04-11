@@ -36,9 +36,11 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 @click.option("--slow", is_flag=True, help="Perform half of the databases search at a time")
 @click.option("--process", type=str,
               help="Process the results on a specific folder without performing the search")
+@click.option("--only_admet", type=click.Path(exists=True),
+              help= "Only run the admet analysis on a file with a list of SMILES")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
 @click.version_option("1.2.3")
-def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, output):
+def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output):
 
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
         raise click.BadParameter(
@@ -51,6 +53,11 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
     if (plip_csv and session) or (plip_csv and pharma):
         raise click.BadParameter(
             "You can't provide a plip csv file with a session or with the pharma flag.")
+    if only_admet and (receptor_file or ligand_file or pharma or session or plip_csv or slow or process or output or
+                       score or rmsd):
+
+        raise click.BadParameter(
+            "You can't provide any other flag with --only_admet.")
     start_time = time.time()
     if not process:
         if slow:
