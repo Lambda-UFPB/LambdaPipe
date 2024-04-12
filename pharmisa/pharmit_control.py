@@ -68,6 +68,11 @@ class PharmitControl:
                     break
                 except NoSuchElementException:
                     pass
+                try:
+                    self.driver.find_element(By.XPATH, '//*[@class="pharmit_featurediv"]')
+                    break
+                except NoSuchElementException:
+                    pass
         except WebDriverException:
             raise InvalidInputError("Error uploading files. Please check the path and file name and try again.")
 
