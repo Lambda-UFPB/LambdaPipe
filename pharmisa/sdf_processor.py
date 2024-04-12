@@ -24,7 +24,7 @@ class SdfProcessor:
             n = len(last_files) - self.minimize_count
             last_files = last_files[:-n]
         for file in last_files:
-            transfer_to_folder(file, self.output_folder_path, 'cp')
+            transfer_to_folder(file, self.output_folder_path, 'mv')
             file_name = get_file_name(file)
             zipped_path = f"{self.output_folder_path}/{file_name}"
             unzipped_path = unzip(zipped_path)
