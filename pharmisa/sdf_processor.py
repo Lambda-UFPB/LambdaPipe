@@ -1,6 +1,6 @@
 from .utils import *
 from rdkit import RDLogger, Chem
-
+from tqdm import tqdm
 
 class SdfProcessor:
     """Selects the best molecules from sdf files"""
@@ -32,7 +32,7 @@ class SdfProcessor:
 
     def _process_sdf(self):
         """Generate dict with Molecule ID: (score, smiles)"""
-        for file in self.sdf_files:
+        for file in tqdm(self.sdf_files, desc="Processing Pharmit Results", ncols=70):
             lg = RDLogger.logger()
             lg.setLevel(RDLogger.CRITICAL)  # Suppresses RDKit warnings
             mol_supplier = Chem.SDMolSupplier(file, strictParsing=True, sanitize=False)
