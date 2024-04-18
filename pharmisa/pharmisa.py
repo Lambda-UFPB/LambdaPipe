@@ -38,7 +38,7 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 @click.option("--only_admet", type=str,
               help="Only run the admet analysis on a file with a list of SMILES")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
-@click.version_option("1.2.6")
+@click.version_option("1.2.7")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output):
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
         raise click.BadParameter(
