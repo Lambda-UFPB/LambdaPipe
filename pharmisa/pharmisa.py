@@ -160,7 +160,6 @@ def exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folde
         analyzed_mol_dict = process_smiles_file(only_admet)
     try:
         molecules_dict_list = run_admet_request(analyzed_mol_dict)
-
     except AdmetServerError:
         click.echo("\nError: ADMET server is down. Please try again later using pharmisa --process.")
         return
