@@ -138,7 +138,6 @@ def exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_num
 def exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folder_name, start_time,
                           only_process=False, only_admet=None):
     if not only_admet:
-        click.echo("\nProcessing Results...")
         sdfp = SdfProcessor(minimize_count, output_folder_path, score=score, cli_rmsd=rmsd)
         if not only_process:
             sdfp.get_sdfs()
@@ -159,7 +158,6 @@ def exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folde
 
     else:
         analyzed_mol_dict = process_smiles_file(only_admet)
-    click.echo("\nGetting ADMET info...")
     try:
         molecules_dict_list = run_admet_request(analyzed_mol_dict)
 
