@@ -1,5 +1,6 @@
 import subprocess
 import pandas as pd
+from tqdm import tqdm
 from importlib.resources import path
 
 
@@ -70,8 +71,7 @@ def run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters):
         35: 'Ototoxicity',
         40: 'Cytotoxicity HepG2 cell line',
     }
-    for parameter in tox_parameters:
-        print(f'Running fpadmet for {parameter_names[parameter]}')
+    for parameter in tqdm(tox_parameters, desc="Running FPADMET", ncols=100):
         command = ["bash", script_path, "-f", smi_input_file, "-p", str(parameter)]
         subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         predicted_fpadmet = str(fpadmet_path.joinpath(f'RESULTS/predicted{parameter}.txt'))

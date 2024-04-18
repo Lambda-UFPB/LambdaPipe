@@ -2,6 +2,7 @@ from .utils import *
 from rdkit import RDLogger, Chem
 from tqdm import tqdm
 
+
 class SdfProcessor:
     """Selects the best molecules from sdf files"""
     def __init__(self, minimize_count: int, output_folder_path: str, score: float, cli_rmsd: float):

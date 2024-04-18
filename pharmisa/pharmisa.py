@@ -10,7 +10,6 @@ Email: kdu.norat@gmail.com
 
 import click
 import time
-import asyncio
 import os
 from pharmisa.pharmit_control import PharmitControl
 from pharmisa.top_feature_configs import run_feature_configs
