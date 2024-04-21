@@ -17,7 +17,14 @@ def get_number_of_configs(spheres_list: list):
 def get_all_combinations_with_n(spheres_list: list, n: int):
     """All combinations from spheres list with n elements"""
     all_n_combinations = list(combinations(spheres_list, n))
-    return all_n_combinations
+    valid_combinations = []
+
+    for combination in all_n_combinations:
+        coordinates = [(sphere.x, sphere.y, sphere.z) for sphere in combination]
+        if len(coordinates) == len(set(coordinates)):  # check if all coordinates are unique
+            valid_combinations.append(combination)
+
+    return valid_combinations
 
 
 def max_quantity_tuple(combinations_list: list):
