@@ -7,13 +7,13 @@ class JsonHandler:
     def __init__(self, output_file_path=None, old_download_list=None, pharmit_json=None):
         self.output_file_path = output_file_path
         self.old_download_list = old_download_list
+        self.pharmit_params = {}
         if pharmit_json:
             with open(pharmit_json, 'r') as file:
                 pharmit_json = json.load(file)
             self.session = pharmit_json
         else:
             self.session = self.load_json()
-        self._pharma_set_parameters()
 
     def __str__(self):
         pharma_string = ""
@@ -45,11 +45,8 @@ class JsonHandler:
         button["enabled"] = not button["enabled"]
 
     def _pharma_set_parameters(self):
-        self.session["maxMolWeight"] = 500
-        self.session["maxlogp"] = 6
-        self.session["maxrotbonds"] = 6
-        self.session["maxHBA"] = 12
-        self.session["maxHBD"] = 6
+        for key, value in self.pharmit_params.items():
+            self.session[key] = value
 
     @staticmethod
     def _generate_points_list(sphere_tuple: tuple):
@@ -82,6 +79,7 @@ class JsonHandler:
         if file_index is None:
             file_index = ''
         modified_json_path = f"{self.output_file_path}/new_session{file_index}.json"
+        self._pharma_set_parameters()
         with open(modified_json_path, 'w') as file:
             json.dump(self.session, file)
         return modified_json_path

@@ -38,8 +38,25 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 @click.option("--only_admet", type=str,
               help="Only run the admet analysis on a file with a list of SMILES")
 @click.option("-o", "--output", type=click.Path(), help="Folder name containing the results")
+@click.option('--minmolweight', default='', help='Minimum molecular weight')
+@click.option('--maxmolweight', default='', help='Maximum molecular weight')
+@click.option('--minrotbonds', default='', help='Minimum rotational bonds')
+@click.option('--maxrotbonds', default='', help='Maximum rotational bonds')
+@click.option('--minlogp', default='', help='Minimum logP')
+@click.option('--maxlogp', default='', help='Maximum logP')
+@click.option('--minpsa', default='', help='Minimum polar surface area')
+@click.option('--maxpsa', default='', help='Maximum polar surface area')
+@click.option('--minaromatics', default='', help='Minimum aromatics')
+@click.option('--maxaromatics', default='', help='Maximum aromatics')
+@click.option('--minhba', default='', help='Minimum hydrogen bond acceptors')
+@click.option('--maxhba', default='', help='Maximum hydrogen bond acceptors')
+@click.option('--minhbd', default='', help='Minimum hydrogen bond donors')
+@click.option('--maxhbd', default='', help='Maximum hydrogen bond donors')
+@click.option("--pharmisa_params", is_flag=True, help="Activate Phharmisa default parameters for the pharmacophore search")
 @click.version_option("1.2.7")
-def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output):
+def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output,
+             minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics,
+             maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_params):
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
         raise click.BadParameter(
             "You can run --process only with the flags --score and --rmsd.")
@@ -56,6 +73,8 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
         raise click.BadParameter(
             "You can't provide a plip csv file with a session or with the pharma flag.")
     start_time = time.time()
+    pharmit_params = create_dict(minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa,
+                                 minaromatics, maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_params)
     if not process:
         if slow:
             fast = False
@@ -182,6 +201,18 @@ def create_folder(folder_name):
     old_download_list = get_download_list('pharmit*.json*')
 
     return output_folder_path, old_download_list
+
+
+def create_dict(minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics, maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_parms=False):
+    options_dict_keys = ['minMolWeight', 'maxMolWeight', 'minrotbonds', 'maxrotbonds', 'minlogp', 'maxlogp', 'minpsa', 'maxpsa',
+                         'minaromatics', 'maxaromatics', 'minhba', 'maxhba', 'minhbd', 'maxhbd']
+
+    options_dict_values = [minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics, maxaromatics, minhba, maxhba, minhbd, maxhbd]
+    pharmisa_params_values = [300, 550, 1, 6, 1, 6, '', '', 1, 4, 4, 12, 2, 6]
+    if pharmisa_parms:
+        options_dict_values = pharmisa_params_values
+    options_dict = dict(zip(options_dict_keys, options_dict_values))
+    return options_dict
 
 
 def creating_complex(receptor_file, ligand_file, output_folder_path, old_download_list):

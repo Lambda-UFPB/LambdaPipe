@@ -162,5 +162,5 @@ class PharmaOptimizer:
         self._get_pharmacophore_limit()
         self._analyze_sphere_pairs()
         self._factor_multiplier(1.5)
-        self._factor_multiplier(0, decrease=True)
+        self._factor_multiplier(0.01, decrease=True)
         return self._get_last_pharmit_spheres()
