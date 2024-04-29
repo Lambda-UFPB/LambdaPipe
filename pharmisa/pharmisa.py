@@ -53,7 +53,7 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 @click.option('--minhbd', default='', help='Minimum hydrogen bond donors')
 @click.option('--maxhbd', default='', help='Maximum hydrogen bond donors')
 @click.option("--pharmisa_params", is_flag=True, help="Activate Phharmisa default parameters for the pharmacophore search")
-@click.version_option("1.2.7")
+@click.version_option("1.2.8")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output,
              minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics,
              maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_params):
