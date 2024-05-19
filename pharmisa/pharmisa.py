@@ -53,7 +53,7 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 @click.option('--minhbd', default='', help='Minimum hydrogen bond donors')
 @click.option('--maxhbd', default='', help='Maximum hydrogen bond donors')
 @click.option("--pharmisa_params", is_flag=True, help="Activate Phharmisa default parameters for the pharmacophore search")
-@click.version_option("1.2.8")
+@click.version_option("1.2.9")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output,
              minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics,
              maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_params):
@@ -91,7 +91,7 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
             phc, new_session, pharmacophore_number = search_prepare(receptor_file, ligand_file, pharma, session,
                                                                     plip_csv,
                                                                     output_folder_path, old_download_list,
-                                                                    pharmacophore_number)
+                                                                    pharmacophore_number, pharmit_params)
             minimize_count = exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_number,
                                                   is_plip=plip_csv, fast=fast)
             exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folder_name, start_time)
@@ -104,13 +104,14 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
 
 
 def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output_folder_path, old_download_list,
-                   pharmacophore_number):
+                   pharmacophore_number, pharmit_params):
     if session:
         phc = PharmitControl('', '', output_folder_path)
         new_session = [session]
 
     else:
         jsh, phc = creating_complex(receptor_file, ligand_file, output_folder_path, old_download_list)
+        jsh.pharmit_params = pharmit_params
         if pharma:
             pharmacophore_selection_menu(jsh)
             new_session = [jsh.create_json()]
