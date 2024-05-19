@@ -18,7 +18,9 @@ class PharmaOptimizer:
             'PositiveIon': {'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'NegativeIon',
                             'pharmit_final_size': 0},
             'NegativeIon': {'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'PositiveIon',
-                            'pharmit_final_size': 0}
+                            'pharmit_final_size': 0},
+            'Aromatic': {'pharmit_spheres': [], 'plip_spheres': [], 'opposite': 'Aromatic', 'pharmit_final_size': 0}
+
         }
         self.pharmit_spheres_type_available = []
         self.spheres_in_interaction_limit = 0
@@ -26,7 +28,7 @@ class PharmaOptimizer:
     def _generate_pharmit_spheres(self):
         pharmit_spheres_type_available = []
         for feature in self.pharmit_session['points']:
-            if feature['name'] == 'InclusionSphere' or feature['name'] == 'Aromatic':
+            if feature['name'] == 'InclusionSphere':
                 continue
 
             is_donor = self._check_donor(pharmit_feature=feature)
@@ -85,6 +87,8 @@ class PharmaOptimizer:
                 return 'NegativeIon'
         elif row_type == 'hydrophobic':
             return 'Hydrophobic'
+        elif row_type == 'pistacking':
+            return 'Aromatic'
         else:
             return None
 
@@ -125,7 +129,7 @@ class PharmaOptimizer:
                     break
                 if interaction in analyzed_interactions:
                     continue
-                if plip_sphere.interaction_type == 'Hydrophobic':
+                if plip_sphere.interaction_type == 'Hydrophobic' or plip_sphere.interaction_type == 'Aromatic':
                     continue
                 opposite = self.spheres_dict[plip_sphere.interaction_type]['opposite']
                 new_sphere = self._create_interaction_sphere(plip_sphere.x, plip_sphere.y, plip_sphere.z,
@@ -140,14 +144,9 @@ class PharmaOptimizer:
         new_pharmit_sphere.quantity_matched = quantity
         return new_pharmit_sphere
 
-    def _factor_multiplier(self, factor, decrease=False):
-        if decrease:
-            for pharmit_sphere in self.spheres_dict['Hydrophobic']['pharmit_spheres']:
-                pharmit_sphere.quantity_matched *= factor
-        else:
-            for key in ['HydrogenDonor', 'HydrogenAcceptor', 'PositiveIon', 'NegativeIon']:
-                for pharmit_sphere in self.spheres_dict[key]['pharmit_spheres']:
-                    pharmit_sphere.quantity_matched *= factor
+    def _factor_multiplier(self, factor, interaction_type):
+        for pharmit_sphere in self.spheres_dict[interaction_type]['pharmit_spheres']:
+            pharmit_sphere.quantity_matched *= factor
 
     def _get_last_pharmit_spheres(self):
         last_pharmit_spheres = []
@@ -161,6 +160,5 @@ class PharmaOptimizer:
         self._generate_plip_spheres()
         self._get_pharmacophore_limit()
         self._analyze_sphere_pairs()
-        self._factor_multiplier(1.5)
-        self._factor_multiplier(0.01, decrease=True)
+        self._factor_multiplier(0.01, interaction_type='Hydrophobic')
         return self._get_last_pharmit_spheres()
