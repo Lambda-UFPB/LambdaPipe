@@ -57,7 +57,7 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 @click.version_option("1.3.0")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output,
              minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics,
-             maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_params):
+             maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_params, fpadmet):
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
         raise click.BadParameter(
             "You can run --process only with the flags --score and --rmsd.")
@@ -95,13 +95,13 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
                                                                     pharmacophore_number, pharmit_params)
             minimize_count = exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_number,
                                                   is_plip=plip_csv, fast=fast)
-            exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folder_name, start_time)
+            exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folder_name, start_time, fpadmet=fpadmet)
         else:
             exec_pharmisa_process(0, score, output_folder_path, rmsd, folder_name, start_time, only_admet=only_admet)
     else:
         folder_name = process.split("/")[-1]
         output_folder_path = get_absolute_path(process)
-        exec_pharmisa_process(0, score, output_folder_path, rmsd, folder_name, start_time, only_process=True)
+        exec_pharmisa_process(0, score, output_folder_path, rmsd, folder_name, start_time, only_process=True, fpadmet=fpadmet)
 
 
 def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output_folder_path, old_download_list,
