@@ -52,7 +52,8 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 @click.option('--maxhba', default='', help='Maximum hydrogen bond acceptors')
 @click.option('--minhbd', default='', help='Minimum hydrogen bond donors')
 @click.option('--maxhbd', default='', help='Maximum hydrogen bond donors')
-@click.option("--pharmisa_params", is_flag=True, help="Activate Phharmisa default parameters for the pharmacophore search")
+@click.option("--pharmisa_params", is_flag=True, help="Activate Pharmisa default parameters for the pharmacophore search")
+@click.option("-f", "--fpadmet", is_flag=True, help="Activate FPADMET toxicity filter before the admet analysis")
 @click.version_option("1.2.9")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output,
              minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics,
@@ -155,7 +156,7 @@ def exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_num
 
 
 def exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folder_name, start_time,
-                          only_process=False, only_admet=None):
+                          only_process=False, only_admet=None, fpadmet=False):
     if not only_admet:
         sdfp = SdfProcessor(minimize_count, output_folder_path, score=score, cli_rmsd=rmsd)
         if not only_process:
@@ -172,8 +173,9 @@ def exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folde
             return
 
         if len(analyzed_mol_dict) > 5000:
-            click.echo(f"\nStarting fpadmet analysis in {len(analyzed_mol_dict)} molecules")
-            analyzed_mol_dict = run_fpadmet(analyzed_mol_dict, output_folder_path)
+            if fpadmet:
+                click.echo(f"\nStarting fpadmet analysis in {len(analyzed_mol_dict)} molecules")
+                analyzed_mol_dict = run_fpadmet(analyzed_mol_dict, output_folder_path)
 
     else:
         analyzed_mol_dict = process_smiles_file(only_admet)
