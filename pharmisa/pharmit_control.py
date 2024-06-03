@@ -24,6 +24,7 @@ class PharmitControl:
         self.hit_limit = {'chembl': 2, 'chemspace': 1, 'molport': 2, 'mcule': 2, 'ultimate': 1, 'pubchem': 1, 'zinc': 4}
         self.big_dbs = []
         self.modified_json_path = ''
+        self.dbs_opened = 0
         chrome_options = Options()
         possible_chrome_binary_locations = get_chrome_binary_path()
         for chrome_location in possible_chrome_binary_locations:
@@ -95,8 +96,9 @@ class PharmitControl:
         if db in self.hit_limit.keys():
             self.driver.find_element(By.XPATH, '//*[@id="ui-id-7"]').click()
             for limit in range(self.hit_limit[db]):
-                time.sleep(0.4)
+                time.sleep(1)
                 while True:
+
                     try:
                         self.driver.find_element(By.XPATH,
                                                  '//*[@id="ui-id-8"]/table/tbody/tr[1]/td[2]/span/a[1]').click()
@@ -124,6 +126,7 @@ class PharmitControl:
     def _search(self):
         # Click on the search button
         search = self.driver.find_element(By.XPATH, '//*[@id="pharmitsearchbutton"]')
+        start_search_click = time.time()
         while True:
             try:
                 search.click()
@@ -132,7 +135,11 @@ class PharmitControl:
             except WebDriverException:
                 pass
         while True:
+            end_search_click = time.time()
             try:
+                if end_search_click - start_search_click > 90:
+                    search.click()
+                    start_search_click = time.time()
                 self.driver.find_element(By.XPATH, '//*[@class="pharmit_namecol sorting_disabled"]')
                 break
             except NoSuchElementException:
@@ -277,7 +284,6 @@ class PharmitControl:
         time.sleep(1)
         while True:
             try:
-                print(f"Downloading {db}")
                 save_button.click()
                 break
             except WebDriverException:
@@ -303,22 +309,31 @@ class PharmitControl:
 
     def _run_fast(self, run_pharmisa):
         for index, db in enumerate(self.db_list[0]):
-            self._run_chain(db, index, run_pharmisa, 0)
+            self._run_chain(db, index, run_pharmisa, 0, mode='fast')
         self._loops(self.db_list[0])
 
     def _run_slow(self, run_pharmisa):
         for run, db_half in enumerate(self.db_list):
             for count, db in enumerate(db_half):
-                self._run_chain(db, count, run_pharmisa, run)
+                self._run_chain(db, count, run_pharmisa, run, mode='slow')
             self._loops(db_half)
 
-    def _run_chain(self, db, index, run_pharmisa, run):
-        if run_pharmisa == 0 or run == 0:
+    def _run_chain(self, db, index, run_pharmisa, run, mode):
+        allow_hit_reduction = True
+        if run_pharmisa == 0 and run != 0:
+            allow_hit_reduction = False
+        if mode == 'fast':
+            current_db_list_size = len(self.db_list[0][0]) + len(self.db_list[0][1])
+        else:
+            current_db_list_size = len(self.db_list[0][0])
+
+        if run_pharmisa == 0 and not (self.dbs_opened == current_db_list_size):
             self._open_tab(index, db)
+            self.dbs_opened += 1
         time.sleep(1)
         self._upload_json(n=index, json_path=self.modified_json_path)
         self._change_db(run, index, db)
-        if run_pharmisa == 0 and self.is_plip:
+        if run_pharmisa == 0 and self.is_plip and allow_hit_reduction:
             self._hit_reduction(db)
         time.sleep(1)
         self._search()
