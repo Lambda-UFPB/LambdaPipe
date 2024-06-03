@@ -4,7 +4,7 @@ import string
 import glob
 import gzip
 import time
-from .exceptions import InvalidInputError
+from exceptions import InvalidInputError
 
 
 def get_absolute_path(path: str):
@@ -50,9 +50,9 @@ def get_minimized_results_files_list(directory_path):
 
 
 def create_folders(folder_name: str):
-    absolute_path = get_absolute_path(folder_name)
-    output_folder_path = os.path.join(absolute_path, folder_name)
+    output_folder_path = get_absolute_path(folder_name)
     results_folder_path = os.path.join(output_folder_path, "results")
+    print(output_folder_path, results_folder_path)
     for path in [output_folder_path, results_folder_path]:
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
@@ -135,4 +135,4 @@ def check_downloads_complete(download_list: list):
 
 
 if __name__ == '__main__':
-    pass
+    create_folders('test')
