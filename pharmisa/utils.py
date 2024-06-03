@@ -4,7 +4,7 @@ import string
 import glob
 import gzip
 import time
-from exceptions import InvalidInputError
+from .exceptions import InvalidInputError
 
 
 def get_absolute_path(path: str):

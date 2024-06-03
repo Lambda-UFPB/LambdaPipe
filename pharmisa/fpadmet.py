@@ -59,18 +59,6 @@ def get_new_dict_final(dict_final, smi_input_file, fpadmet_df):
 
 def run_loop_fpadmet(fpadmet_path, script_path, smi_input_file, tox_parameters):
     results = []
-    parameter_names = {
-        4: 'AMES Mutagenecity',
-        6: 'Rat Acute LD50',
-        7: 'Drug-Induced Liver Inhibition',
-        8: 'HERG Cardiotoxicity',
-        10: 'Myelotoxicity',
-        17: 'Myopathy Toxicity',
-        25: 'Respiratory Toxicity',
-        29: 'Carcinogenecity',
-        35: 'Ototoxicity',
-        40: 'Cytotoxicity HepG2 cell line',
-    }
     for parameter in tqdm(tox_parameters, desc="Running FPADMET", ncols=100):
         command = ["bash", script_path, "-f", smi_input_file, "-p", str(parameter)]
         subprocess.run(command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
