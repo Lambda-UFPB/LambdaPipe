@@ -20,7 +20,8 @@ from pharmisa.fpadmet import run_fpadmet
 from pharmisa.admet_request import run_admet_request
 from pharmisa.admet_analyzer import AdmetAnalyzer
 from pharmisa.get_html import results_to_html
-from pharmisa.utils import (generate_folder_name, create_folders, create_stats_file, get_download_list, get_absolute_path, get_minimized_results_files_list, write_stats, process_smiles_file)
+from pharmisa.utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
+                            get_absolute_path, get_minimized_results_files_list, write_stats, process_smiles_file)
 from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 
 
@@ -52,7 +53,8 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 @click.option('--maxhba', default='', help='Maximum hydrogen bond acceptors')
 @click.option('--minhbd', default='', help='Minimum hydrogen bond donors')
 @click.option('--maxhbd', default='', help='Maximum hydrogen bond donors')
-@click.option("--pharmisa_params", is_flag=True, help="Activate Pharmisa default parameters for the pharmacophore search")
+@click.option("--pharmisa_params", is_flag=True,
+              help="Activate Pharmisa default parameters for the pharmacophore search")
 @click.option("-f", "--fpadmet", is_flag=True, help="Activate FPADMET toxicity filter before the admet analysis")
 @click.version_option("1.3.0")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output,
@@ -95,13 +97,15 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
                                                                     pharmacophore_number, pharmit_params)
             minimize_count = exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_number,
                                                   is_plip=plip_csv, fast=fast)
-            exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folder_name, start_time, fpadmet=fpadmet)
+            exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folder_name, start_time,
+                                  fpadmet=fpadmet)
         else:
             exec_pharmisa_process(0, score, output_folder_path, rmsd, folder_name, start_time, only_admet=only_admet)
     else:
         folder_name = process.split("/")[-1]
         output_folder_path = get_absolute_path(process)
-        exec_pharmisa_process(0, score, output_folder_path, rmsd, folder_name, start_time, only_process=True, fpadmet=fpadmet)
+        exec_pharmisa_process(0, score, output_folder_path, rmsd, folder_name, start_time, only_process=True,
+                              fpadmet=fpadmet)
 
 
 def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output_folder_path, old_download_list,
@@ -206,11 +210,13 @@ def create_folder(folder_name):
     return output_folder_path, old_download_list
 
 
-def create_dict(minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics, maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_parms=False):
-    options_dict_keys = ['minMolWeight', 'maxMolWeight', 'minrotbonds', 'maxrotbonds', 'minlogp', 'maxlogp', 'minpsa', 'maxpsa',
-                         'minaromatics', 'maxaromatics', 'minhba', 'maxhba', 'minhbd', 'maxhbd']
+def create_dict(minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics,
+                maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_parms=False):
+    options_dict_keys = ['minMolWeight', 'maxMolWeight', 'minrotbonds', 'maxrotbonds', 'minlogp', 'maxlogp', 'minpsa',
+                         'maxpsa', 'minaromatics', 'maxaromatics', 'minhba', 'maxhba', 'minhbd', 'maxhbd']
 
-    options_dict_values = [minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics, maxaromatics, minhba, maxhba, minhbd, maxhbd]
+    options_dict_values = [minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa,
+                           minaromatics, maxaromatics, minhba, maxhba, minhbd, maxhbd]
     pharmisa_params_values = [300, 550, 1, 6, 1, 6, '', '', 1, 4, 4, 12, 2, 6]
     if pharmisa_parms:
         options_dict_values = pharmisa_params_values

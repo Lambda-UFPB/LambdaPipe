@@ -3,8 +3,6 @@ import random
 import string
 import glob
 import gzip
-import pandas as pd
-import re
 import time
 from .exceptions import InvalidInputError
 
@@ -52,10 +50,8 @@ def get_minimized_results_files_list(directory_path):
 
 
 def create_folders(folder_name: str):
-    main_directory_path = os.path.expanduser(f"~/pharmisa_results")
-    if not os.path.exists(main_directory_path):
-        os.makedirs(main_directory_path, exist_ok=True)
-    output_folder_path = os.path.join(main_directory_path, folder_name)
+    absolute_path = get_absolute_path(folder_name)
+    output_folder_path = os.path.join(absolute_path, folder_name)
     results_folder_path = os.path.join(output_folder_path, "results")
     for path in [output_folder_path, results_folder_path]:
         if not os.path.exists(path):
