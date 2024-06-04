@@ -21,8 +21,7 @@ from pharmisa.fpadmet import run_fpadmet
 from pharmisa.admet_request import run_admet_request
 from pharmisa.admet_analyzer import AdmetAnalyzer
 from pharmisa.get_html import results_to_html
-from pharmisa.utils import (generate_folder_name, create_folders, create_stats_file, get_download_list,
-                            get_absolute_path, get_minimized_results_files_list, write_stats, process_smiles_file)
+from pharmisa.utils import *
 from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 
 
@@ -58,10 +57,11 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
               help="Activate Pharmisa default parameters for the pharmacophore search")
 @click.option("-f", "--fpadmet", is_flag=True, help="Activate FPADMET toxicity filter before the admet analysis")
 @click.option("--firefox", is_flag=True, help="Use Firefox as the browser for the pharmit search")
-@click.version_option("1.3.2")
+@click.version_option("1.3.3")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output,
              minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics,
              maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_params, fpadmet, firefox):
+    start_time = time.time()
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
         raise click.BadParameter(
             "You can run --process only with the flags --score and --rmsd.")
@@ -105,9 +105,13 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
             exec_pharmisa_process(0, score, output_folder_path, rmsd, folder_name, start_time, only_admet=only_admet)
     else:
         folder_name = process.split("/")[-1]
-        output_folder_path = get_absolute_path(process)
+        output_folder_path = create_folders(process, only_process=True)
+        create_stats_file(output_folder_path)
         exec_pharmisa_process(0, score, output_folder_path, rmsd, folder_name, start_time, only_process=True,
                               fpadmet=fpadmet)
+
+    end_time = time.time()
+    click.echo(f"\nTotal time: {(end_time - start_time) / 60:.2f} minutes")
 
 
 def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output_folder_path, old_download_list,
@@ -174,7 +178,8 @@ def exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folde
             if not os.path.isdir(output_folder_path):
                 click.echo(f"\nFolder {output_folder_path} does not exist. Please provide a valid path.")
                 return
-            sdfp.sdf_files = get_minimized_results_files_list(output_folder_path)
+            minimized_files = get_minimized_results_files_list(output_folder_path)
+            sdfp.sdf_files = unzip_minimized_results_files(minimized_files)
         try:
             analyzed_mol_dict = sdfp.run_sdfprocessor()
         except ValueError:
@@ -233,7 +238,8 @@ def creating_complex(receptor_file, ligand_file, output_folder_path, old_downloa
     if not firefox:
         phc = PharmitControl(get_absolute_path(receptor_file), get_absolute_path(ligand_file), output_folder_path)
     else:
-        phc = PharmitControlFirefox(get_absolute_path(receptor_file), get_absolute_path(ligand_file), output_folder_path)
+        phc = PharmitControlFirefox(get_absolute_path(receptor_file), get_absolute_path(ligand_file),
+                                    output_folder_path)
     phc.upload_complex()
     phc.get_json()
     jsh = JsonHandler(output_file_path=output_folder_path, old_download_list=old_download_list)

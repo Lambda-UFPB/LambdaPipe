@@ -4,7 +4,7 @@ import string
 import glob
 import gzip
 import time
-from .exceptions import InvalidInputError
+from exceptions import InvalidInputError
 
 
 def get_absolute_path(path: str):
@@ -49,15 +49,33 @@ def get_minimized_results_files_list(directory_path):
     return absolute_paths
 
 
-def create_folders(folder_name: str):
+def unzip_minimized_results_files(files_list: list):
+    unzipped_files = []
+    for file in files_list:
+        if file.endswith('.gz'):
+            unzipped_path = unzip(file)
+            unzipped_files.append(unzipped_path)
+        else:
+            unzipped_files.append(file)
+    return unzipped_files
+
+
+def create_folders(folder_name: str, only_process=False):
+    folder_name = folder_name.strip()
     output_folder_path = get_absolute_path(folder_name)
     results_folder_path = os.path.join(output_folder_path, "results")
-    for path in [output_folder_path, results_folder_path]:
+    if only_process:
+        folders_to_create = [results_folder_path]
+    else:
+        folders_to_create = [output_folder_path, results_folder_path]
+    for path in folders_to_create:
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
-
         else:
-            raise FileExistsError()
+            if only_process:
+                pass
+            else:
+                raise FileExistsError()
 
     return output_folder_path
 
@@ -138,6 +156,3 @@ def get_last_files(file_pattern: str, old_download_list: list = None, minimize_c
 def check_downloads_complete(download_list: list):
     return all('crdownload' not in file for file in download_list)
 
-
-if __name__ == '__main__':
-    create_folders('test')
