@@ -62,9 +62,8 @@ def run_admet_request(best_molecules_dict: dict):
     check_ssl()
     smiles_strings = get_smiles_sublist(best_molecules_dict)
     final_mol_list = []
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=5) as executor:
         for smiles_sublist in tqdm(smiles_strings, desc="Getting ADMET info", ncols=100):
             response = executor.submit(get_mol_list, smiles_sublist)
             final_mol_list.extend(response.result())
-            time.sleep(1)
     return final_mol_list
