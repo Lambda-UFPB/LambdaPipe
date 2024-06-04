@@ -27,9 +27,9 @@ def check_ssl():
 
 def get_smiles_sublist(best_molecules_dict: dict):
     smiles_tuple_list = [(key, mol_data['smiles']) for key, mol_data in best_molecules_dict.items()]
-    if len(smiles_tuple_list) > 100:
-        num_sublists = (len(smiles_tuple_list) + 99) // 100
-        smiles_sublists = [smiles_tuple_list[i*100:(i+1)*100] for i in range(num_sublists)]
+    if len(smiles_tuple_list) > 5:
+        num_sublists = (len(smiles_tuple_list) + 4) // 5
+        smiles_sublists = [smiles_tuple_list[i*5:(i+1)*5] for i in range(num_sublists)]
     else:
         smiles_sublists = [smiles_tuple_list]
     return smiles_sublists
@@ -46,14 +46,15 @@ def get_mol_list(smiles_sublist: list):
         "feature": False
     }
     r = requests.post(url, json=payload, verify=SSL)
-    if r.status_code == 503:
-        raise ConnectionError("Service Unavailable")
+    if r.status_code == 503 or r.status_code == 500:
+        raise ConnectionError("Admetlab 3.0 Is Unavailable or Encountered an Error")
     else:
         response = r.json()
     mol_list = response['data']['data']
     for mol, key in zip(mol_list, ids_list):
         mol['id'] = key
     mol_list = [mol for mol in mol_list if 'Invalid Molecule' not in mol.values()]
+    time.sleep(0.2)
     return mol_list
 
 
