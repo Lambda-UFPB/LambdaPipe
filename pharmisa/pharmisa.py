@@ -1,5 +1,5 @@
 """
-PharMisa is a program that uses the pharmit webserver  and admetlab 2.0 in an integrated pipeline to find
+PharMisa is a program that uses the pharmit webserver and admetlab 3.0 in an integrated pipeline to find
 the best molecules for a given target.
 
 Author: Carlos Eduardo Norat
@@ -12,6 +12,7 @@ import click
 import time
 import os
 from pharmisa.pharmit_control import PharmitControl
+from pharmisa.pharmit_control_firefox import PharmitControlFirefox
 from pharmisa.top_feature_configs import run_feature_configs
 from pharmisa.pharma_optimizer import PharmaOptimizer
 from pharmisa.json_handler import JsonHandler
@@ -56,10 +57,11 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 @click.option("--pharmisa_params", is_flag=True,
               help="Activate Pharmisa default parameters for the pharmacophore search")
 @click.option("-f", "--fpadmet", is_flag=True, help="Activate FPADMET toxicity filter before the admet analysis")
+@click.option("--firefox", is_flag=True, help="Use Firefox as the browser for the pharmit search")
 @click.version_option("1.3.2")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output,
              minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics,
-             maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_params, fpadmet):
+             maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_params, fpadmet, firefox):
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
         raise click.BadParameter(
             "You can run --process only with the flags --score and --rmsd.")
@@ -94,7 +96,7 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
             phc, new_session, pharmacophore_number = search_prepare(receptor_file, ligand_file, pharma, session,
                                                                     plip_csv,
                                                                     output_folder_path, old_download_list,
-                                                                    pharmacophore_number, pharmit_params)
+                                                                    pharmacophore_number, pharmit_params, firefox)
             minimize_count = exec_pharmisa_search(new_session, phc, output_folder_path, pharmacophore_number,
                                                   is_plip=plip_csv, fast=fast)
             exec_pharmisa_process(minimize_count, score, output_folder_path, rmsd, folder_name, start_time,
@@ -109,13 +111,16 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
 
 
 def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output_folder_path, old_download_list,
-                   pharmacophore_number, pharmit_params):
+                   pharmacophore_number, pharmit_params, firefox):
     if session:
-        phc = PharmitControl('', '', output_folder_path)
+        if not firefox:
+            phc = PharmitControl('', '', output_folder_path)
+        else:
+            phc = PharmitControlFirefox('', '', output_folder_path)
         new_session = [session]
 
     else:
-        jsh, phc = creating_complex(receptor_file, ligand_file, output_folder_path, old_download_list)
+        jsh, phc = creating_complex(receptor_file, ligand_file, output_folder_path, old_download_list, firefox)
         jsh.pharmit_params = pharmit_params
         if pharma:
             pharmacophore_selection_menu(jsh)
@@ -224,8 +229,11 @@ def create_dict(minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, m
     return options_dict
 
 
-def creating_complex(receptor_file, ligand_file, output_folder_path, old_download_list):
-    phc = PharmitControl(get_absolute_path(receptor_file), get_absolute_path(ligand_file), output_folder_path)
+def creating_complex(receptor_file, ligand_file, output_folder_path, old_download_list, firefox):
+    if not firefox:
+        phc = PharmitControl(get_absolute_path(receptor_file), get_absolute_path(ligand_file), output_folder_path)
+    else:
+        phc = PharmitControlFirefox(get_absolute_path(receptor_file), get_absolute_path(ligand_file), output_folder_path)
     phc.upload_complex()
     phc.get_json()
     jsh = JsonHandler(output_file_path=output_folder_path, old_download_list=old_download_list)

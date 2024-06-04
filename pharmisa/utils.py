@@ -73,6 +73,12 @@ def process_smiles_file(smiles_file_path: str):
     return analyzed_mol_dict
 
 
+def get_firefox_binary_path():
+    cmd = "which firefox"
+    possible_path = os.popen(cmd).read()
+    return [possible_path.replace("\n", "")]
+
+
 def get_chrome_binary_path():
     cmd_a = "which google-chrome"
     cmd_b = "which google-chrome-stable"
