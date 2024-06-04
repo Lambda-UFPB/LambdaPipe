@@ -61,7 +61,6 @@ from pharmisa.exceptions import AdmetServerError, NoMoleculeError
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output,
              minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics,
              maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_params, fpadmet, firefox):
-    start_time = time.time()
     if process and (receptor_file or ligand_file or pharma or session or plip_csv or slow):
         raise click.BadParameter(
             "You can run --process only with the flags --score and --rmsd.")
@@ -109,9 +108,6 @@ def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv,
         create_stats_file(output_folder_path)
         exec_pharmisa_process(0, score, output_folder_path, rmsd, folder_name, start_time, only_process=True,
                               fpadmet=fpadmet)
-
-    end_time = time.time()
-    click.echo(f"\nTotal time: {(end_time - start_time) / 60:.2f} minutes")
 
 
 def search_prepare(receptor_file, ligand_file, pharma, session, plip_csv, output_folder_path, old_download_list,
