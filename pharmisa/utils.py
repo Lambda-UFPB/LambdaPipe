@@ -52,7 +52,6 @@ def get_minimized_results_files_list(directory_path):
 def create_folders(folder_name: str):
     output_folder_path = get_absolute_path(folder_name)
     results_folder_path = os.path.join(output_folder_path, "results")
-    print(output_folder_path, results_folder_path)
     for path in [output_folder_path, results_folder_path]:
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
