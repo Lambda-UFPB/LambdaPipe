@@ -27,9 +27,9 @@ def check_ssl():
 
 def get_smiles_sublist(best_molecules_dict: dict):
     smiles_tuple_list = [(key, mol_data['smiles']) for key, mol_data in best_molecules_dict.items()]
-    if len(smiles_tuple_list) > 5:
-        num_sublists = (len(smiles_tuple_list) + 4) // 5
-        smiles_sublists = [smiles_tuple_list[i*5:(i+1)*5] for i in range(num_sublists)]
+    if len(smiles_tuple_list) > 20:
+        num_sublists = (len(smiles_tuple_list) + 19) // 20
+        smiles_sublists = [smiles_tuple_list[i*20:(i+1)*20] for i in range(num_sublists)]
     else:
         smiles_sublists = [smiles_tuple_list]
     return smiles_sublists
