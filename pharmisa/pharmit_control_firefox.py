@@ -40,7 +40,6 @@ class PharmitControlFirefox:
         profile.set_preference("browser.cache.memory.capacity", -1)
         profile.set_preference("browser.link.open_newwindow", 3)
         firefox_options.profile = profile
-        firefox_options.headless = True
         is_snap, snap_geckodriver_path = check_snap_installation()
         if is_snap:
             service = Service(snap_geckodriver_path)
