@@ -1,4 +1,4 @@
-import time
+
 import re
 from selenium import webdriver
 from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
@@ -8,6 +8,7 @@ from selenium.common.exceptions import (WebDriverException, NoSuchElementExcepti
                                         StaleElementReferenceException, ElementNotInteractableException)
 from selenium.webdriver.firefox.service import Service
 from webdriver_manager.firefox import GeckoDriverManager
+import tempfile
 from .utils import *
 from .exceptions import InvalidInputError
 
@@ -28,9 +29,9 @@ class PharmitControlFirefox:
         self.big_dbs = []
         self.dbs_opened = 0
         self.modified_json_path = ''
-        
+        self.temp_dir = tempfile.mkdtemp()
         firefox_options = Options()
-        profile = FirefoxProfile()
+        profile = FirefoxProfile(self.temp_dir)
         profile.set_preference("browser.link.open_newwindow.restriction", 0)
         firefox_options.set_preference("browser.sessionhistory.max_total_viewers", -1)
         firefox_options.set_preference("browser.sessionstore.restore_on_demand", False)
@@ -39,7 +40,24 @@ class PharmitControlFirefox:
         profile.set_preference("browser.cache.memory.capacity", -1)
         profile.set_preference("browser.link.open_newwindow", 3)
         firefox_options.profile = profile
-       
+        is_snap, snap_geckodriver_path = check_snap_installation()
+        if is_snap:
+            service = Service(snap_geckodriver_path)
+            firefox_options.binary_location = "/snap/bin/firefox"
+            self.driver = webdriver.Firefox(service=service, options=firefox_options)
+        else:
+            possible_firefox_binary_locations = get_firefox_binary_path()
+            for firefox_location in possible_firefox_binary_locations:
+                try:
+                    firefox_options.binary_location = firefox_location
+                    service = Service(GeckoDriverManager().install())
+                    self.driver = webdriver.Firefox(service=service, options=firefox_options)
+                    break
+                except WebDriverException:
+                    continue
+            else:
+                raise RuntimeError("Could not find a suitable Firefox installation.")
+
         possible_firefox_binary_locations = get_firefox_binary_path()
         for firefox_location in possible_firefox_binary_locations:
             try:
@@ -381,5 +399,7 @@ class PharmitControlFirefox:
             if quit_now:
                 self.driver.quit()
                 write_stats(f"\nTotal hits: {self.total_hits}", self.output_folder_path)
+                if os.path.exists(self.temp_dir):
+                    os.rmdir(self.temp_dir)
 
         return self.minimize_count

@@ -97,6 +97,14 @@ def get_firefox_binary_path():
     return [possible_path.replace("\n", "")]
 
 
+def check_snap_installation():
+    snap_bin_path = "/snap/bin/firefox"
+    geckodriver_path = "/snap/bin/firefox.geckodriver"
+    if os.path.exists(snap_bin_path) and os.path.exists(geckodriver_path):
+        return True, geckodriver_path
+    return False, None
+
+
 def get_chrome_binary_path():
     cmd_a = "which google-chrome"
     cmd_b = "which google-chrome-stable"
@@ -155,4 +163,3 @@ def get_last_files(file_pattern: str, old_download_list: list = None, minimize_c
 
 def check_downloads_complete(download_list: list):
     return all('crdownload' not in file for file in download_list)
-
