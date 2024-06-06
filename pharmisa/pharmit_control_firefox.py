@@ -40,6 +40,7 @@ class PharmitControlFirefox:
         profile.set_preference("browser.cache.memory.capacity", -1)
         profile.set_preference("browser.link.open_newwindow", 3)
         firefox_options.profile = profile
+        firefox_options.headless = True
         is_snap, snap_geckodriver_path = check_snap_installation()
         if is_snap:
             service = Service(snap_geckodriver_path)
@@ -200,7 +201,7 @@ class PharmitControlFirefox:
                 current_time = current_time - start_time
                 if db in self.searched_dbs:
                     continue
-                if current_time > 300:
+                if current_time > 2100:
                     search_count += 1
                     self.searched_dbs.append(db)
                     self.big_dbs.append(db)
