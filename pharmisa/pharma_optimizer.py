@@ -1,6 +1,6 @@
 import json
 import pandas as pd
-from .pharma_sphere import PharmaSphere
+from pharma_sphere import PharmaSphere
 
 
 class PharmaOptimizer:
