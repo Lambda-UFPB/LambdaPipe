@@ -57,7 +57,7 @@ from exceptions import AdmetServerError, NoMoleculeError
               help="Activate Pharmisa default parameters for the pharmacophore search")
 @click.option("-f", "--fpadmet", is_flag=True, help="Activate FPADMET toxicity filter before the admet analysis")
 @click.option("--firefox", is_flag=True, help="Use Firefox as the browser for the pharmit search")
-@click.version_option("1.3.4")
+@click.version_option("1.3.5")
 def pharmisa(receptor_file, ligand_file, score, rmsd, pharma, session, plip_csv, slow, process, only_admet, output,
              minmolweight, maxmolweight, minrotbonds, maxrotbonds, minlogp, maxlogp, minpsa, maxpsa, minaromatics,
              maxaromatics, minhba, maxhba, minhbd, maxhbd, pharmisa_params, fpadmet, firefox):
