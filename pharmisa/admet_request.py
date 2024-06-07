@@ -1,5 +1,4 @@
 import requests
-from concurrent.futures import ThreadPoolExecutor
 import urllib3
 import time
 from tqdm import tqdm
@@ -54,7 +53,6 @@ def get_mol_list(smiles_sublist: list):
     for mol, key in zip(mol_list, ids_list):
         mol['id'] = key
     mol_list = [mol for mol in mol_list if 'Invalid Molecule' not in mol.values()]
-    time.sleep(0.2)
     return mol_list
 
 
@@ -62,9 +60,8 @@ def run_admet_request(best_molecules_dict: dict):
     check_ssl()
     smiles_strings = get_smiles_sublist(best_molecules_dict)
     final_mol_list = []
-    with ThreadPoolExecutor() as executor:
-        for smiles_sublist in tqdm(smiles_strings, desc="Getting ADMET info", ncols=100):
-            response = executor.submit(get_mol_list, smiles_sublist)
-            final_mol_list.extend(response.result())
-            time.sleep(1)
+    for smiles_sublist in tqdm(smiles_strings, desc="Getting ADMET info", ncols=100):
+        mol_list = get_mol_list(smiles_sublist)
+        final_mol_list.extend(mol_list)
+        time.sleep(1.1)
     return final_mol_list

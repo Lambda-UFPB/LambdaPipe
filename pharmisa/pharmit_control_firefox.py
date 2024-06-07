@@ -43,7 +43,7 @@ class PharmitControlFirefox:
         is_snap, snap_geckodriver_path = check_snap_installation()
         if is_snap:
             service = Service(snap_geckodriver_path)
-            firefox_options.binary_location = "/snap/bin/firefox"
+            firefox_options.binary_location = "/snap/firefox/current/firefox.launcher"
             self.driver = webdriver.Firefox(service=service, options=firefox_options)
         else:
             possible_firefox_binary_locations = get_firefox_binary_path()
